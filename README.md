@@ -7,3 +7,4 @@ Gruppeprosjekt i datamodellering og databasesystemer
 
 # Utkast - Conceptuel modell
 ## Patrick:
+a
