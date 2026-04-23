@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IDATG2204 – Incident Management Dashboard</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --accent: #6c7bff;
+    --accent2: #a78bfa;
+    --green: #34d399;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --radius: 10px;
+    --font: 'Segoe UI', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+  /* Layout */
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 280px; min-width: 280px; background: var(--surface);
+    border-right: 1px solid var(--border); display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .main { flex: 1; padding: 32px; overflow-x: hidden; }
+
+  /* Sidebar */
+  .sidebar-header {
+    padding: 24px 20px 16px; border-bottom: 1px solid var(--border);
+  }
+  .sidebar-header h1 { font-size: 1rem; font-weight: 700; color: var(--accent); letter-spacing: .5px; }
+  .sidebar-header p { font-size: .75rem; color: var(--muted); margin-top: 4px; }
+
+  .nav-section { padding: 12px 0; }
+  .nav-section-label {
+    font-size: .65rem; text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--muted); padding: 0 20px 8px;
+  }
+  .nav-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 20px; cursor: pointer; transition: background .15s;
+    border-left: 3px solid transparent;
+  }
+  .nav-item:hover { background: var(--surface2); }
+  .nav-item.active { background: var(--surface2); border-left-color: var(--accent); }
+  .nav-num {
+    font-size: .7rem; font-weight: 700; color: var(--accent);
+    background: rgba(108,123,255,.15); border-radius: 4px;
+    padding: 1px 6px; margin-top: 2px; flex-shrink: 0;
+  }
+  .nav-label { font-size: .82rem; color: var(--text); line-height: 1.4; }
+
+  /* Main header */
+  .page-header { margin-bottom: 28px; }
+  .page-header h2 { font-size: 1.5rem; font-weight: 700; }
+  .page-header p { color: var(--muted); font-size: .9rem; margin-top: 6px; }
+
+  /* Cards */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px; margin-bottom: 24px;
+  }
+  .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; }
+  .card-desc { font-size: .85rem; color: var(--muted); margin-bottom: 20px; }
+
+  /* Params */
+  .params-row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
+  .param-group { display: flex; flex-direction: column; gap: 6px; }
+  .param-group label { font-size: .8rem; color: var(--muted); }
+  .param-group input {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 6px; padding: 8px 12px;
+    font-size: .9rem; width: 160px; outline: none; transition: border .15s;
+  }
+  .param-group input:focus { border-color: var(--accent); }
+
+  /* Buttons */
+  .btn {
+    padding: 9px 20px; border-radius: 6px; border: none; cursor: pointer;
+    font-size: .88rem; font-weight: 600; transition: all .15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #7d8cff; }
+  .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-ghost {
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+
+  /* Status badge */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
+  }
+  .badge-resolved  { background: rgba(52,211,153,.15); color: var(--green); }
+  .badge-closed    { background: rgba(52,211,153,.1); color: #6ee7b7; }
+  .badge-assigned  { background: rgba(251,191,36,.15); color: var(--yellow); }
+  .badge-reported  { background: rgba(148,163,184,.15); color: var(--muted); }
+  .badge-verified  { background: rgba(108,123,255,.15); color: var(--accent); }
+  .badge-high      { background: rgba(248,113,113,.15); color: var(--red); }
+  .badge-critical  { background: rgba(248,113,113,.3); color: #fca5a5; }
+  .badge-medium    { background: rgba(251,191,36,.15); color: var(--yellow); }
+  .badge-low       { background: rgba(52,211,153,.12); color: var(--green); }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+  thead th {
+    background: var(--surface2); padding: 10px 14px;
+    text-align: left; font-size: .72rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .8px; color: var(--muted);
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(108,123,255,.04); }
+  tbody td { padding: 10px 14px; color: var(--text); vertical-align: top; }
+
+  /* Result meta */
+  .result-meta {
+    display: flex; align-items: center; gap: 16px; margin-bottom: 14px;
+  }
+  .result-count {
+    font-size: .8rem; color: var(--muted);
+    background: var(--surface2); padding: 4px 10px; border-radius: 20px;
+  }
+
+  /* Error */
+  .error-box {
+    background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3);
+    color: var(--red); border-radius: 8px; padding: 14px 18px; font-size: .85rem;
+    font-family: monospace; white-space: pre-wrap; word-break: break-all;
+  }
+
+  /* Custom query */
+  .sql-editor {
+    width: 100%; min-height: 140px; background: var(--surface2);
+    border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; padding: 14px; font-family: 'Cascadia Code','Fira Code',monospace;
+    font-size: .85rem; resize: vertical; outline: none; transition: border .15s;
+  }
+  .sql-editor:focus { border-color: var(--accent); }
+  .sql-hint { font-size: .75rem; color: var(--muted); margin-top: 8px; margin-bottom: 14px; }
+
+  /* Section hidden */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* Health indicator */
+  .health-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    margin-right: 6px; background: var(--muted);
+  }
+  .health-dot.ok { background: var(--green); }
+  .health-dot.err { background: var(--red); }
+  .health-status { font-size: .75rem; color: var(--muted); padding: 16px 20px; }
+
+  /* Loader */
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin .6s linear infinite; margin-right: 8px;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Empty */
+  .empty { text-align: center; padding: 48px; color: var(--muted); }
+  .empty-icon { font-size: 2rem; margin-bottom: 10px; }
+
+  @media (max-width: 768px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: static; }
+    .main { padding: 16px; }
+    .params-row { flex-direction: column; }
+    .param-group input { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <h1>🏢 IDATG2204 | Group 1</h1>
+      <p>Incident Management DB</p>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Predefined Queries</div>
+      {% for qid, q in queries.items() %}
+      <div class="nav-item {% if loop.first %}active{% endif %}"
+           onclick="showSection('{{ qid }}')" id="nav-{{ qid }}">
+        <span class="nav-num">{{ loop.index }}</span>
+        <span class="nav-label">{{ q.title }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Tools</div>
+      <div class="nav-item" onclick="showSection('custom')" id="nav-custom">
+        <span class="nav-num">✎</span>
+        <span class="nav-label">Custom SQL Query</span>
+      </div>
+    </div>
+
+    <div class="health-status" id="health-status">
+      <span class="health-dot" id="health-dot"></span>Checking database...
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="page-header">
+      <h2 id="main-title">Incident Management Dashboard</h2>
+      <p id="main-desc">Select a query from the menu on the left.</p>
+    </div>
+
+    <!-- Dynamic query sections -->
+    {% for qid, q in queries.items() %}
+    <div class="section{% if loop.first %} active{% endif %}" id="section-{{ qid }}">
+      <div class="card">
+        <div class="card-title">{{ q.title }}</div>
+        <div class="card-desc">{{ q.description }}</div>
+
+        {% if q.params %}
+        <div class="params-row" id="params-{{ qid }}">
+          {% for p in q.params %}
+          <div class="param-group">
+            <label>{{ p.label }}</label>
+            <input type="{{ p.type }}" id="param-{{ qid }}-{{ p.name }}"
+                   value="{{ p.default }}" placeholder="{{ p.label }}">
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <button class="btn btn-primary" onclick="runQuery('{{ qid }}')">
+          Run Query
+        </button>
+      </div>
+
+      <div id="result-{{ qid }}"></div>
+    </div>
+    {% endfor %}
+
+    <!-- Custom query section -->
+    <div class="section" id="section-custom">
+      <div class="card">
+        <div class="card-title">✎ Custom SQL Query</div>
+        <div class="card-desc">Write any SELECT query against the <code>idatg2204_prosjekt</code> database. Only SELECT statements are allowed.</div>
+        <textarea class="sql-editor" id="custom-sql" placeholder="SELECT * FROM incident LIMIT 10;"></textarea>
+        <p class="sql-hint">💡 Tables: incident, building, maintenance_task, technician, user, resource, incident_location, technician_work, incident_history, availability, room, floor, skill, role, resource_usage, resource_requirement</p>
+        <button class="btn btn-primary" onclick="runCustom()">Run Query</button>
+      </div>
+      <div id="result-custom"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+const QUERY_META = {{ queries | tojson }};
+let activeSection = '{{ queries.keys()|list|first }}';
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+  activeSection = id;
+
+  if (id === 'custom') {
+    document.getElementById('main-title').textContent = 'Custom SQL Query';
+    document.getElementById('main-desc').textContent = 'Write and run your own SELECT queries against the database.';
+  } else {
+    const q = QUERY_META[id];
+    document.getElementById('main-title').textContent = q.title;
+    document.getElementById('main-desc').textContent = q.description;
+  }
+}
+
+async function runQuery(qid) {
+  const q = QUERY_META[qid];
+  const params = {};
+  for (const p of (q.params || [])) {
+    const el = document.getElementById('param-' + qid + '-' + p.name);
+    params[p.name] = el ? el.value : '';
+  }
+
+  const resultEl = document.getElementById('result-' + qid);
+  resultEl.innerHTML = '<p><span class="spinner"></span>Running query...</p>';
+
+  try {
+    const res = await fetch('/api/run/' + qid, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(params)
+    });
+    const data = await res.json();
+    if (data.error) {
+      resultEl.innerHTML = '<div class="error-box">⚠ ' + escHtml(data.error) + '</div>';
+    } else {
+      resultEl.innerHTML = renderTable(data.results, data.count);
+    }
+  } catch(e) {
+    resultEl.innerHTML = '<div class="error-box">⚠ Network error: ' + escHtml(e.message) + '</div>';
+  }
+}
+
+async function runCustom() {
+  const sql = document.getElementById('custom-sql').value.trim();
+  if (!sql) return;
+  const resultEl = document.getElementById('result-custom');
+  resultEl.innerHTML = '<p><span class="spinner"></span>Running query...</p>';
+
+  try {
+    const res = await fetch('/api/custom', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({sql})
+    });
+    const data = await res.json();
+    if (data.error) {
+      resultEl.innerHTML = '<div class="error-box">⚠ ' + escHtml(data.error) + '</div>';
+    } else {
+      resultEl.innerHTML = renderTable(data.results, data.count);
+    }
+  } catch(e) {
+    resultEl.innerHTML = '<div class="error-box">⚠ Network error: ' + escHtml(e.message) + '</div>';
+  }
+}
+
+function renderTable(rows, count) {
+  if (!rows || rows.length === 0) {
+    return '<div class="empty"><div class="empty-icon">🔍</div><p>No results found.</p></div>';
+  }
+  const cols = Object.keys(rows[0]);
+  const STATUS_BADGES = {
+    resolved:'badge-resolved', closed:'badge-closed', assigned:'badge-assigned',
+    reported:'badge-reported', verified:'badge-verified',
+    high:'badge-high', critical:'badge-critical', medium:'badge-medium', low:'badge-low',
+    finished:'badge-resolved', 'in progress':'badge-assigned',
+    'not started':'badge-reported', aborted:'badge-high'
+  };
+  const BADGE_COLS = new Set(['status','severity_level','current_status','task_status','priority','t1_type','t2_type']);
+
+  let html = `<div class="result-meta"><span class="result-count">📊 ${count} row${count !== 1 ? 's' : ''}</span></div>`;
+  html += '<div class="table-wrap"><table><thead><tr>';
+  cols.forEach(c => { html += `<th>${escHtml(c.replace(/_/g,' '))}</th>`; });
+  html += '</tr></thead><tbody>';
+
+  rows.forEach(row => {
+    html += '<tr>';
+    cols.forEach(c => {
+      const val = row[c];
+      let cell = '';
+      if (val === null || val === undefined) {
+        cell = '<span style="color:var(--muted)">—</span>';
+      } else if (BADGE_COLS.has(c)) {
+        const key = String(val).toLowerCase();
+        const cls = STATUS_BADGES[key] || '';
+        cell = cls ? `<span class="badge ${cls}">${escHtml(String(val))}</span>` : escHtml(String(val));
+      } else {
+        cell = escHtml(String(val));
+      }
+      html += `<td>${cell}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Health check
+async function checkHealth() {
+  try {
+    const res = await fetch('/api/health');
+    const data = await res.json();
+    const dot = document.getElementById('health-dot');
+    const status = document.getElementById('health-status');
+    if (data.status === 'ok') {
+      dot.className = 'health-dot ok';
+      status.innerHTML = '<span class="health-dot ok"></span>Database connected';
+    } else {
+      dot.className = 'health-dot err';
+      status.innerHTML = '<span class="health-dot err"></span>DB error: ' + escHtml(data.db);
+    }
+  } catch(e) {
+    document.getElementById('health-status').innerHTML = '<span class="health-dot err"></span>No connection';
+  }
+}
+
+checkHealth();
+</script>
+</body>
+</html>

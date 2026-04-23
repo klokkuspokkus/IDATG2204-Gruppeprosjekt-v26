@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      # Peker mot XAMPP på vertsmaskinen
+      DB_HOST: host.docker.internal
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ""          # Endre til ditt passord hvis satt
+      DB_NAME: idatg2204_prosjekt
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # Nødvendig på Linux
+    restart: unless-stopped
