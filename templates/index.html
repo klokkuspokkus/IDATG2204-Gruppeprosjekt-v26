@@ -6,183 +6,138 @@
 <title>IDATG2204 – Incident Management Dashboard</title>
 <style>
   :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --surface2: #22263a;
-    --border: #2e3350;
-    --accent: #6c7bff;
-    --accent2: #a78bfa;
-    --green: #34d399;
-    --red: #f87171;
-    --yellow: #fbbf24;
-    --text: #e2e8f0;
-    --muted: #94a3b8;
-    --radius: 10px;
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a; --border: #2e3350;
+    --accent: #6c7bff; --accent2: #a78bfa; --green: #34d399; --red: #f87171;
+    --yellow: #fbbf24; --text: #e2e8f0; --muted: #94a3b8; --radius: 10px;
     --font: 'Segoe UI', system-ui, sans-serif;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  * { box-sizing: border-box; margin:0; padding:0; }
   body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
 
-  /* Layout */
   .layout { display: flex; min-height: 100vh; }
-  .sidebar {
-    width: 280px; min-width: 280px; background: var(--surface);
-    border-right: 1px solid var(--border); display: flex; flex-direction: column;
-    position: sticky; top: 0; height: 100vh; overflow-y: auto;
-  }
+  .sidebar { width: 300px; min-width: 300px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
   .main { flex: 1; padding: 32px; overflow-x: hidden; }
 
-  /* Sidebar */
-  .sidebar-header {
-    padding: 24px 20px 16px; border-bottom: 1px solid var(--border);
-  }
+  .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
   .sidebar-header h1 { font-size: 1rem; font-weight: 700; color: var(--accent); letter-spacing: .5px; }
   .sidebar-header p { font-size: .75rem; color: var(--muted); margin-top: 4px; }
 
+  .user-info { padding: 16px 20px; border-bottom: 1px solid var(--border); background: rgba(108,123,255,.05); }
+  .user-name { font-size: .9rem; font-weight: 600; color: var(--text); }
+  .user-role { font-size: .72rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .user-email { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+  .btn-logout { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 4px 10px; border-radius: 4px; font-size: .72rem; cursor: pointer; margin-top: 8px; }
+  .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+  .login-form { padding: 20px; }
+  .login-form h3 { font-size: .9rem; margin-bottom: 12px; }
+  .login-form input { width: 100%; padding: 8px 12px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 6px; font-size: .85rem; margin-bottom: 10px; outline: none; }
+  .login-form input:focus { border-color: var(--accent); }
+  .btn-login { width: 100%; padding: 8px; background: var(--accent); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: .85rem; font-weight: 600; }
+  .btn-login:hover { background: #7d8cff; }
+
   .nav-section { padding: 12px 0; }
-  .nav-section-label {
-    font-size: .65rem; text-transform: uppercase; letter-spacing: 1.5px;
-    color: var(--muted); padding: 0 20px 8px;
-  }
-  .nav-item {
-    display: flex; align-items: flex-start; gap: 10px;
-    padding: 10px 20px; cursor: pointer; transition: background .15s;
-    border-left: 3px solid transparent;
-  }
+  .nav-section-label { font-size: .65rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); padding: 0 20px 8px; }
+  .nav-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 20px; cursor: pointer; transition: background .15s; border-left: 3px solid transparent; }
   .nav-item:hover { background: var(--surface2); }
   .nav-item.active { background: var(--surface2); border-left-color: var(--accent); }
-  .nav-num {
-    font-size: .7rem; font-weight: 700; color: var(--accent);
-    background: rgba(108,123,255,.15); border-radius: 4px;
-    padding: 1px 6px; margin-top: 2px; flex-shrink: 0;
-  }
+  .nav-num { font-size: .7rem; font-weight: 700; color: var(--accent); background: rgba(108,123,255,.15); border-radius: 4px; padding: 1px 6px; margin-top: 2px; flex-shrink: 0; }
   .nav-label { font-size: .82rem; color: var(--text); line-height: 1.4; }
 
-  /* Main header */
   .page-header { margin-bottom: 28px; }
   .page-header h2 { font-size: 1.5rem; font-weight: 700; }
   .page-header p { color: var(--muted); font-size: .9rem; margin-top: 6px; }
 
-  /* Cards */
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 24px; margin-bottom: 24px;
-  }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; }
   .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; }
   .card-desc { font-size: .85rem; color: var(--muted); margin-bottom: 20px; }
 
-  /* Params */
   .params-row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
   .param-group { display: flex; flex-direction: column; gap: 6px; }
   .param-group label { font-size: .8rem; color: var(--muted); }
-  .param-group input {
-    background: var(--surface2); border: 1px solid var(--border);
-    color: var(--text); border-radius: 6px; padding: 8px 12px;
-    font-size: .9rem; width: 160px; outline: none; transition: border .15s;
+  .param-group input, .param-group select, .param-group textarea {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 6px; padding: 8px 12px; font-size: .9rem; outline: none; transition: border .15s;
   }
-  .param-group input:focus { border-color: var(--accent); }
+  .param-group input:focus, .param-group select:focus { border-color: var(--accent); }
+  .param-group textarea { min-height: 80px; resize: vertical; width: 100%; }
 
-  /* Buttons */
-  .btn {
-    padding: 9px 20px; border-radius: 6px; border: none; cursor: pointer;
-    font-size: .88rem; font-weight: 600; transition: all .15s;
-  }
+  .btn { padding: 9px 20px; border-radius: 6px; border: none; cursor: pointer; font-size: .88rem; font-weight: 600; transition: all .15s; }
   .btn-primary { background: var(--accent); color: #fff; }
   .btn-primary:hover { background: #7d8cff; }
   .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
-  .btn-ghost {
-    background: transparent; color: var(--muted);
-    border: 1px solid var(--border);
-  }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
   .btn-ghost:hover { color: var(--text); border-color: var(--accent); }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-danger:hover { background: #ef4444; }
 
-  /* Status badge */
-  .badge {
-    display: inline-block; padding: 2px 8px; border-radius: 4px;
-    font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .5px;
-  }
-  .badge-resolved  { background: rgba(52,211,153,.15); color: var(--green); }
-  .badge-closed    { background: rgba(52,211,153,.1); color: #6ee7b7; }
-  .badge-assigned  { background: rgba(251,191,36,.15); color: var(--yellow); }
-  .badge-reported  { background: rgba(148,163,184,.15); color: var(--muted); }
-  .badge-verified  { background: rgba(108,123,255,.15); color: var(--accent); }
-  .badge-high      { background: rgba(248,113,113,.15); color: var(--red); }
-  .badge-critical  { background: rgba(248,113,113,.3); color: #fca5a5; }
-  .badge-medium    { background: rgba(251,191,36,.15); color: var(--yellow); }
-  .badge-low       { background: rgba(52,211,153,.12); color: var(--green); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  .badge-resolved { background: rgba(52,211,153,.15); color: var(--green); }
+  .badge-closed { background: rgba(52,211,153,.1); color: #6ee7b7; }
+  .badge-assigned { background: rgba(251,191,36,.15); color: var(--yellow); }
+  .badge-reported { background: rgba(148,163,184,.15); color: var(--muted); }
+  .badge-verified { background: rgba(108,123,255,.15); color: var(--accent); }
+  .badge-high { background: rgba(248,113,113,.15); color: var(--red); }
+  .badge-critical { background: rgba(248,113,113,.3); color: #fca5a5; }
+  .badge-medium { background: rgba(251,191,36,.15); color: var(--yellow); }
+  .badge-low { background: rgba(52,211,153,.12); color: var(--green); }
+  .badge-finished { background: rgba(52,211,153,.15); color: var(--green); }
+  .badge-notstarted { background: rgba(148,163,184,.15); color: var(--muted); }
+  .badge-inprogress { background: rgba(251,191,36,.15); color: var(--yellow); }
+  .badge-aborted { background: rgba(248,113,113,.15); color: var(--red); }
 
-  /* Table */
   .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
   table { width: 100%; border-collapse: collapse; font-size: .83rem; }
-  thead th {
-    background: var(--surface2); padding: 10px 14px;
-    text-align: left; font-size: .72rem; font-weight: 600;
-    text-transform: uppercase; letter-spacing: .8px; color: var(--muted);
-    border-bottom: 1px solid var(--border); white-space: nowrap;
-  }
+  thead th { background: var(--surface2); padding: 10px 14px; text-align: left; font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }
   tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: rgba(108,123,255,.04); }
   tbody td { padding: 10px 14px; color: var(--text); vertical-align: top; }
 
-  /* Result meta */
-  .result-meta {
-    display: flex; align-items: center; gap: 16px; margin-bottom: 14px;
-  }
-  .result-count {
-    font-size: .8rem; color: var(--muted);
-    background: var(--surface2); padding: 4px 10px; border-radius: 20px;
-  }
+  .result-meta { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+  .result-count { font-size: .8rem; color: var(--muted); background: var(--surface2); padding: 4px 10px; border-radius: 20px; }
 
-  /* Error */
-  .error-box {
-    background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3);
-    color: var(--red); border-radius: 8px; padding: 14px 18px; font-size: .85rem;
-    font-family: monospace; white-space: pre-wrap; word-break: break-all;
-  }
+  .error-box { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.3); color: var(--red); border-radius: 8px; padding: 14px 18px; font-size: .85rem; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
 
-  /* Custom query */
-  .sql-editor {
-    width: 100%; min-height: 140px; background: var(--surface2);
-    border: 1px solid var(--border); color: var(--text);
-    border-radius: 8px; padding: 14px; font-family: 'Cascadia Code','Fira Code',monospace;
-    font-size: .85rem; resize: vertical; outline: none; transition: border .15s;
-  }
+  .sql-editor { width:100%; min-height:140px; background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:14px; font-family:'Cascadia Code','Fira Code',monospace; font-size:.85rem; resize:vertical; outline:none; }
   .sql-editor:focus { border-color: var(--accent); }
-  .sql-hint { font-size: .75rem; color: var(--muted); margin-top: 8px; margin-bottom: 14px; }
+  .sql-hint { font-size:.75rem; color:var(--muted); margin-top:8px; margin-bottom:14px; }
 
-  /* Section hidden */
   .section { display: none; }
   .section.active { display: block; }
 
-  /* Health indicator */
-  .health-dot {
-    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-    margin-right: 6px; background: var(--muted);
-  }
-  .health-dot.ok { background: var(--green); }
-  .health-dot.err { background: var(--red); }
-  .health-status { font-size: .75rem; color: var(--muted); padding: 16px 20px; }
+  .health-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; background:var(--muted); }
+  .health-dot.ok { background:var(--green); }
+  .health-dot.err { background:var(--red); }
+  .health-status { font-size:.75rem; color:var(--muted); padding:16px 20px; }
 
-  /* Loader */
-  .spinner {
-    display: inline-block; width: 16px; height: 16px;
-    border: 2px solid var(--border); border-top-color: var(--accent);
-    border-radius: 50%; animation: spin .6s linear infinite; margin-right: 8px;
-    vertical-align: middle;
-  }
+  .spinner { display:inline-block; width:16px; height:16px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .6s linear infinite; margin-right:8px; vertical-align:middle; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Empty */
-  .empty { text-align: center; padding: 48px; color: var(--muted); }
-  .empty-icon { font-size: 2rem; margin-bottom: 10px; }
+  .empty { text-align:center; padding:48px; color:var(--muted); }
+  .empty-icon { font-size:2rem; margin-bottom:10px; }
 
-  @media (max-width: 768px) {
-    .layout { flex-direction: column; }
-    .sidebar { width: 100%; height: auto; position: static; }
-    .main { padding: 16px; }
-    .params-row { flex-direction: column; }
-    .param-group input { width: 100%; }
+  .form-row { display:flex; gap:16px; margin-bottom:16px; flex-wrap:wrap; }
+  .form-group { display:flex; flex-direction:column; gap:6px; flex:1; min-width:200px; }
+  .form-group label { font-size:.8rem; color:var(--muted); }
+  .form-group input, .form-group select, .form-group textarea {
+    background:var(--surface2); border:1px solid var(--border); color:var(--text);
+    border-radius:6px; padding:8px 12px; font-size:.9rem; outline:none;
+  }
+  .form-group input:focus, .form-group select:focus { border-color:var(--accent); }
+  .form-group textarea { min-height:80px; resize:vertical; }
+
+  .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.6); z-index:1000; justify-content:center; align-items:center; }
+  .modal-overlay.active { display:flex; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; }
+  .modal h3 { margin-bottom:16px; }
+
+  @media (max-width:768px) {
+    .layout { flex-direction:column; }
+    .sidebar { width:100%; height:auto; position:static; }
+    .main { padding:16px; }
+    .params-row { flex-direction:column; }
+    .form-row { flex-direction:column; }
   }
 </style>
 </head>
@@ -191,76 +146,226 @@
   <!-- Sidebar -->
   <nav class="sidebar">
     <div class="sidebar-header">
-      <h1>🏢 IDATG2204 | Group 1</h1>
-      <p>Incident Management DB</p>
+      <h1>IDATG2204 | Incident Mgmt</h1>
+      <p>Group Project v26</p>
     </div>
 
-    <div class="nav-section">
-      <div class="nav-section-label">Predefined Queries</div>
+    <!-- User info / Login -->
+    <div id="sidebar-user">
+      <div class="login-form" id="login-area">
+        <h3>Login</h3>
+        <input type="email" id="login-email" placeholder="Enter your email" value="">
+        <button class="btn-login" onclick="doLogin()">Login</button>
+        <p id="login-error" style="color:var(--red);font-size:.75rem;margin-top:8px;display:none;"></p>
+      </div>
+      <div class="user-info" id="user-area" style="display:none;">
+        <div class="user-name" id="user-name"></div>
+        <div class="user-role" id="user-role"></div>
+        <div class="user-email" id="user-email"></div>
+        <button class="btn-logout" onclick="doLogout()">Logout</button>
+      </div>
+    </div>
+
+    <div class="nav-section" id="nav-main">
+      <div class="nav-section-label">Dashboard</div>
+      <div class="nav-item active" onclick="showSection('dashboard')" id="nav-dashboard">
+        <span class="nav-num">📊</span><span class="nav-label">Dashboard Stats</span>
+      </div>
+      <div class="nav-item" onclick="showSection('myincidents')" id="nav-myincidents">
+        <span class="nav-num">📋</span><span class="nav-label">My Incidents</span>
+      </div>
+      <div class="nav-item" onclick="showSection('mytasks')" id="nav-mytasks">
+        <span class="nav-num">🔧</span><span class="nav-label">My Tasks</span>
+      </div>
+    </div>
+
+    <div class="nav-section" id="nav-crud" style="display:none;">
+      <div class="nav-section-label">Management</div>
+      <div class="nav-item" onclick="showSection('incidents')" id="nav-incidents">
+        <span class="nav-num">📝</span><span class="nav-label">All Incidents</span>
+      </div>
+      <div class="nav-item" onclick="showSection('tasks')" id="nav-tasks">
+        <span class="nav-num">⚙️</span><span class="nav-label">All Tasks</span>
+      </div>
+      <div class="nav-item" onclick="showSection('resources')" id="nav-resources">
+        <span class="nav-num">📦</span><span class="nav-label">Resources</span>
+      </div>
+      <div class="nav-item" onclick="showSection('technicians')" id="nav-technicians">
+        <span class="nav-num">👷</span><span class="nav-label">Technicians</span>
+      </div>
+      <div class="nav-item" onclick="showSection('availability')" id="nav-availability">
+        <span class="nav-num">🕐</span><span class="nav-label">Availability</span>
+      </div>
+      <div class="nav-item" onclick="showSection('users')" id="nav-users">
+        <span class="nav-num">👤</span><span class="nav-label">Users</span>
+      </div>
+      <div class="nav-item" onclick="showSection('skills')" id="nav-skills">
+        <span class="nav-num">🎓</span><span class="nav-label">Skills</span>
+      </div>
+      <div class="nav-item" onclick="showSection('buildings')" id="nav-buildings">
+        <span class="nav-num">🏢</span><span class="nav-label">Buildings</span>
+      </div>
+    </div>
+
+    <div class="nav-section" id="nav-queries" style="display:none;">
+      <div class="nav-section-label">Queries</div>
       {% for qid, q in queries.items() %}
-      <div class="nav-item {% if loop.first %}active{% endif %}"
-           onclick="showSection('{{ qid }}')" id="nav-{{ qid }}">
-        <span class="nav-num">{{ loop.index }}</span>
-        <span class="nav-label">{{ q.title }}</span>
+      <div class="nav-item" onclick="showSection('{{ qid }}')" id="nav-{{ qid }}">
+        <span class="nav-num">{{ loop.index }}</span><span class="nav-label">{{ q.title }}</span>
       </div>
       {% endfor %}
-    </div>
-
-    <div class="nav-section">
-      <div class="nav-section-label">Tools</div>
       <div class="nav-item" onclick="showSection('custom')" id="nav-custom">
-        <span class="nav-num">✎</span>
-        <span class="nav-label">Custom SQL Query</span>
+        <span class="nav-num">✎</span><span class="nav-label">Custom SQL</span>
       </div>
     </div>
 
     <div class="health-status" id="health-status">
-      <span class="health-dot" id="health-dot"></span>Checking database...
+      <span class="health-dot" id="health-dot"></span>Checking...
     </div>
   </nav>
 
   <!-- Main -->
   <main class="main">
     <div class="page-header">
-      <h2 id="main-title">Incident Management Dashboard</h2>
-      <p id="main-desc">Select a query from the menu on the left.</p>
+      <h2 id="main-title">Dashboard</h2>
+      <p id="main-desc">Overview of incident statistics</p>
     </div>
 
-    <!-- Dynamic query sections -->
+    <!-- Dashboard -->
+    <div class="section active" id="section-dashboard">
+      <div class="card">
+        <div class="card-title">System Statistics</div>
+        <div class="card-desc">Overview of the incident management system</div>
+        <div id="stats-content"><span class="spinner"></span>Loading...</div>
+      </div>
+    </div>
+
+    <!-- My Incidents -->
+    <div class="section" id="section-myincidents">
+      <div class="card">
+        <div class="card-title">My Incidents</div>
+        <div class="card-desc">Incidents you have reported</div>
+        <button class="btn btn-primary" onclick="showCreateIncident()" style="margin-bottom:16px;">Report New Incident</button>
+        <div id="myincidents-list"></div>
+      </div>
+    </div>
+
+    <!-- My Tasks -->
+    <div class="section" id="section-mytasks">
+      <div class="card">
+        <div class="card-title">My Tasks</div>
+        <div class="card-desc">Maintenance tasks assigned to you</div>
+        <div id="mytasks-list"></div>
+      </div>
+    </div>
+
+    <!-- All Incidents -->
+    <div class="section" id="section-incidents">
+      <div class="card">
+        <div class="card-title">All Incidents</div>
+        <div class="card-desc">Manage all incidents in the system</div>
+        <button class="btn btn-primary" onclick="showCreateIncident()" style="margin-bottom:16px;">Create Incident</button>
+        <div id="incidents-list"></div>
+      </div>
+    </div>
+
+    <!-- All Tasks -->
+    <div class="section" id="section-tasks">
+      <div class="card">
+        <div class="card-title">All Tasks</div>
+        <div class="card-desc">Manage all maintenance tasks</div>
+        <button class="btn btn-primary" onclick="showCreateTask()" style="margin-bottom:16px;">Create Task</button>
+        <div id="tasks-list"></div>
+      </div>
+    </div>
+
+    <!-- Resources -->
+    <div class="section" id="section-resources">
+      <div class="card">
+        <div class="card-title">Resources</div>
+        <div class="card-desc">Manage equipment, tools, and vehicles</div>
+        <button class="btn btn-primary" onclick="showCreateResource()" style="margin-bottom:16px;">Add Resource</button>
+        <div id="resources-list"></div>
+      </div>
+    </div>
+
+    <!-- Technicians -->
+    <div class="section" id="section-technicians">
+      <div class="card">
+        <div class="card-title">Technicians</div>
+        <div class="card-desc">View and manage technician information</div>
+        <div id="technicians-list"></div>
+      </div>
+    </div>
+
+    <!-- Availability -->
+    <div class="section" id="section-availability">
+      <div class="card">
+        <div class="card-title">Technician Availability</div>
+        <div class="card-desc">Manage weekly availability schedules</div>
+        <button class="btn btn-primary" onclick="showCreateAvailability()" style="margin-bottom:16px;">Add Availability</button>
+        <div id="availability-list"></div>
+      </div>
+    </div>
+
+    <!-- Users -->
+    <div class="section" id="section-users">
+      <div class="card">
+        <div class="card-title">Users</div>
+        <div class="card-desc">Manage system users</div>
+        <button class="btn btn-primary" onclick="showCreateUser()" style="margin-bottom:16px;">Add User</button>
+        <div id="users-list"></div>
+      </div>
+    </div>
+
+    <!-- Skills -->
+    <div class="section" id="section-skills">
+      <div class="card">
+        <div class="card-title">Skills</div>
+        <div class="card-desc">Manage technician skills</div>
+        <button class="btn btn-primary" onclick="showCreateSkill()" style="margin-bottom:16px;">Add Skill</button>
+        <div id="skills-list"></div>
+      </div>
+    </div>
+
+    <!-- Buildings -->
+    <div class="section" id="section-buildings">
+      <div class="card">
+        <div class="card-title">Buildings</div>
+        <div class="card-desc">Campus buildings</div>
+        <div id="buildings-list"></div>
+      </div>
+    </div>
+
+    <!-- Predefined Queries -->
     {% for qid, q in queries.items() %}
-    <div class="section{% if loop.first %} active{% endif %}" id="section-{{ qid }}">
+    <div class="section" id="section-{{ qid }}">
       <div class="card">
         <div class="card-title">{{ q.title }}</div>
         <div class="card-desc">{{ q.description }}</div>
-
         {% if q.params %}
         <div class="params-row" id="params-{{ qid }}">
           {% for p in q.params %}
           <div class="param-group">
             <label>{{ p.label }}</label>
-            <input type="{{ p.type }}" id="param-{{ qid }}-{{ p.name }}"
-                   value="{{ p.default }}" placeholder="{{ p.label }}">
+            <input type="{{ p.type }}" id="param-{{ qid }}-{{ p.name }}" value="{{ p.default }}" placeholder="{{ p.label }}">
           </div>
           {% endfor %}
         </div>
         {% endif %}
-
-        <button class="btn btn-primary" onclick="runQuery('{{ qid }}')">
-          Run Query
-        </button>
+        <button class="btn btn-primary" onclick="runQuery('{{ qid }}')">Run Query</button>
       </div>
-
       <div id="result-{{ qid }}"></div>
     </div>
     {% endfor %}
 
-    <!-- Custom query section -->
+    <!-- Custom Query -->
     <div class="section" id="section-custom">
       <div class="card">
-        <div class="card-title">✎ Custom SQL Query</div>
-        <div class="card-desc">Write any SELECT query against the <code>idatg2204_prosjekt</code> database. Only SELECT statements are allowed.</div>
+        <div class="card-title">Custom SQL Query</div>
+        <div class="card-desc">Run SELECT queries against the database. Only SELECT allowed.</div>
         <textarea class="sql-editor" id="custom-sql" placeholder="SELECT * FROM incident LIMIT 10;"></textarea>
-        <p class="sql-hint">💡 Tables: incident, building, maintenance_task, technician, user, resource, incident_location, technician_work, incident_history, availability, room, floor, skill, role, resource_usage, resource_requirement</p>
+        <p class="sql-hint">Tables: incident, building, maintenance_task, technician, user, resource, etc.</p>
         <button class="btn btn-primary" onclick="runCustom()">Run Query</button>
       </div>
       <div id="result-custom"></div>
@@ -268,112 +373,656 @@
   </main>
 </div>
 
+<!-- Modals -->
+<!-- Create Incident Modal -->
+<div class="modal-overlay" id="modal-incident">
+  <div class="modal">
+    <h3>Report Incident</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Description *</label>
+        <textarea id="inc-desc" placeholder="Describe the issue"></textarea>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category *</label>
+        <select id="inc-category">
+          <option value="IT">IT</option>
+          <option value="Plumbing">Plumbing</option>
+          <option value="Electrical">Electrical</option>
+          <option value="HVAC">HVAC</option>
+          <option value="Carpentry">Carpentry</option>
+          <option value="General">General</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Severity</label>
+        <select id="inc-severity">
+          <option value="Low">Low</option>
+          <option value="Medium" selected>Medium</option>
+          <option value="High">High</option>
+          <option value="Critical">Critical</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Building</label>
+        <select id="inc-building"></select>
+      </div>
+      <div class="form-group">
+        <label>Floor</label>
+        <input type="number" id="inc-floor" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Room</label>
+        <input type="number" id="inc-room" placeholder="100">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-primary" onclick="createIncident()">Submit</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-incident')">Cancel</button>
+    </div>
+    <p id="incident-error" style="color:var(--red);font-size:.8rem;margin-top:8px;display:none;"></p>
+  </div>
+</div>
+
+<!-- Create Task Modal -->
+<div class="modal-overlay" id="modal-task">
+  <div class="modal">
+    <h3>Create Maintenance Task</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Incident ID *</label>
+        <input type="number" id="task-incident" placeholder="Incident ID">
+      </div>
+      <div class="form-group">
+        <label>Type *</label>
+        <select id="task-type">
+          <option value="Inspection">Inspection</option>
+          <option value="Repair" selected>Repair</option>
+          <option value="Replacement">Replacement</option>
+          <option value="Preventive maintenance">Preventive Maintenance</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="task-priority">
+          <option value="Low">Low</option>
+          <option value="Medium" selected>Medium</option>
+          <option value="High">High</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Estimated Duration</label>
+        <input type="time" id="task-duration" value="01:00">
+      </div>
+      <div class="form-group">
+        <label>Start Time</label>
+        <input type="datetime-local" id="task-start">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Assign Technicians (comma-separated IDs)</label>
+        <input type="text" id="task-techs" placeholder="e.g. 3,4,5">
+      </div>
+      <div class="form-group">
+        <label>Required Skills (comma-separated IDs)</label>
+        <input type="text" id="task-skills" placeholder="e.g. 1,2">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-primary" onclick="createTask()">Create Task</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-task')">Cancel</button>
+    </div>
+    <p id="task-error" style="color:var(--red);font-size:.8rem;margin-top:8px;display:none;"></p>
+  </div>
+</div>
+
+<!-- Create Resource Modal -->
+<div class="modal-overlay" id="modal-resource">
+  <div class="modal">
+    <h3>Add Resource</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Building</label>
+        <select id="res-building"></select>
+      </div>
+      <div class="form-group">
+        <label>Floor</label>
+        <input type="number" id="res-floor" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Room</label>
+        <input type="number" id="res-room" placeholder="100">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Type</label>
+        <select id="res-type">
+          <option value="tool">Tool</option>
+          <option value="vehicle">Vehicle</option>
+          <option value="equipment">Equipment</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="res-status">
+          <option value="Available">Available</option>
+          <option value="Reserved">Reserved</option>
+          <option value="Not Available">Not Available</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="res-desc" placeholder="Resource description"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-primary" onclick="createResource()">Add Resource</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-resource')">Cancel</button>
+    </div>
+    <p id="resource-error" style="color:var(--red);font-size:.8rem;margin-top:8px;display:none;"></p>
+  </div>
+</div>
+
+<!-- Create User Modal -->
+<div class="modal-overlay" id="modal-user">
+  <div class="modal">
+    <h3>Add User</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Name *</label>
+        <input type="text" id="user-name" placeholder="Full name">
+      </div>
+      <div class="form-group">
+        <label>Email *</label>
+        <input type="email" id="user-email" placeholder="email@ntnu.no">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Role</label>
+        <select id="user-role"></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-primary" onclick="createUser()">Add User</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-user')">Cancel</button>
+    </div>
+    <p id="user-error" style="color:var(--red);font-size:.8rem;margin-top:8px;display:none;"></p>
+  </div>
+</div>
+
+<!-- Create Skill Modal -->
+<div class="modal-overlay" id="modal-skill">
+  <div class="modal">
+    <h3>Add Skill</h3>
+    <div class="form-group">
+      <label>Skill Name *</label>
+      <input type="text" id="skill-name" placeholder="e.g. Electrical">
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-primary" onclick="createSkill()">Add Skill</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-skill')">Cancel</button>
+    </div>
+    <p id="skill-error" style="color:var(--red);font-size:.8rem;margin-top:8px;display:none;"></p>
+  </div>
+</div>
+
+<!-- Create Availability Modal -->
+<div class="modal-overlay" id="modal-availability">
+  <div class="modal">
+    <h3>Add Availability</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Technician ID *</label>
+        <input type="number" id="avail-tech" placeholder="Tech ID">
+      </div>
+      <div class="form-group">
+        <label>Day</label>
+        <select id="avail-day">
+          <option value="Monday">Monday</option>
+          <option value="Tuesday">Tuesday</option>
+          <option value="Wednesday">Wednesday</option>
+          <option value="Thursday">Thursday</option>
+          <option value="Friday">Friday</option>
+          <option value="Saturday">Saturday</option>
+          <option value="Sunday">Sunday</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Start Time</label>
+        <input type="time" id="avail-start" value="08:00">
+      </div>
+      <div class="form-group">
+        <label>End Time</label>
+        <input type="time" id="avail-end" value="16:00">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-primary" onclick="createAvailability()">Add</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-availability')">Cancel</button>
+    </div>
+    <p id="availability-error" style="color:var(--red);font-size:.8rem;margin-top:8px;display:none;"></p>
+  </div>
+</div>
+
 <script>
 const QUERY_META = {{ queries | tojson }};
-let activeSection = '{{ queries.keys()|list|first }}';
+let activeSection = 'dashboard';
+let currentUser = null;
+let appData = { buildings: [], roles: [], skills: [] };
+
+async function checkAuth() {
+  try {
+    const res = await fetch('/api/me');
+    const data = await res.json();
+    if (data.user) {
+      currentUser = data.user;
+      showUserUI();
+    } else {
+      showLoginUI();
+    }
+  } catch(e) { showLoginUI(); }
+}
+
+function showUserUI() {
+  document.getElementById('login-area').style.display = 'none';
+  document.getElementById('user-area').style.display = 'block';
+  document.getElementById('user-name').textContent = currentUser.name || 'User';
+  document.getElementById('user-role').textContent = currentUser.role_name || 'public';
+  document.getElementById('user-email').textContent = currentUser.email || '';
+  const crudRoles = ['manager','administrator','technician'];
+  const queryRoles = ['manager','administrator'];
+  document.getElementById('nav-crud').style.display = crudRoles.includes(currentUser.role_name) ? '' : 'none';
+  document.getElementById('nav-queries').style.display = queryRoles.includes(currentUser.role_name) ? '' : 'none';
+  document.getElementById('nav-mytasks').style.display = currentUser.role_name === 'technician' ? '' : 'none';
+  loadInitialData();
+}
+
+function showLoginUI() {
+  document.getElementById('login-area').style.display = 'block';
+  document.getElementById('user-area').style.display = 'none';
+  document.getElementById('nav-crud').style.display = 'none';
+  document.getElementById('nav-queries').style.display = 'none';
+  currentUser = null;
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) { showError('login-error', 'Enter your email'); return; }
+  try {
+    const res = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email}) });
+    const data = await res.json();
+    if (data.error) { showError('login-error', data.error); return; }
+    currentUser = data.user;
+    showUserUI();
+  } catch(e) { showError('login-error', 'Login failed'); }
+}
+
+async function doLogout() {
+  await fetch('/api/logout', { method:'POST' });
+  currentUser = null;
+  showLoginUI();
+  showSection('dashboard');
+}
 
 function showSection(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('section-' + id).classList.add('active');
-  document.getElementById('nav-' + id).classList.add('active');
+  const sec = document.getElementById('section-' + id);
+  if (sec) sec.classList.add('active');
+  const nav = document.getElementById('nav-' + id);
+  if (nav) nav.classList.add('active');
   activeSection = id;
 
-  if (id === 'custom') {
-    document.getElementById('main-title').textContent = 'Custom SQL Query';
-    document.getElementById('main-desc').textContent = 'Write and run your own SELECT queries against the database.';
-  } else {
-    const q = QUERY_META[id];
-    document.getElementById('main-title').textContent = q.title;
-    document.getElementById('main-desc').textContent = q.description;
-  }
-}
-
-async function runQuery(qid) {
-  const q = QUERY_META[qid];
-  const params = {};
-  for (const p of (q.params || [])) {
-    const el = document.getElementById('param-' + qid + '-' + p.name);
-    params[p.name] = el ? el.value : '';
-  }
-
-  const resultEl = document.getElementById('result-' + qid);
-  resultEl.innerHTML = '<p><span class="spinner"></span>Running query...</p>';
-
-  try {
-    const res = await fetch('/api/run/' + qid, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(params)
-    });
-    const data = await res.json();
-    if (data.error) {
-      resultEl.innerHTML = '<div class="error-box">⚠ ' + escHtml(data.error) + '</div>';
-    } else {
-      resultEl.innerHTML = renderTable(data.results, data.count);
-    }
-  } catch(e) {
-    resultEl.innerHTML = '<div class="error-box">⚠ Network error: ' + escHtml(e.message) + '</div>';
-  }
-}
-
-async function runCustom() {
-  const sql = document.getElementById('custom-sql').value.trim();
-  if (!sql) return;
-  const resultEl = document.getElementById('result-custom');
-  resultEl.innerHTML = '<p><span class="spinner"></span>Running query...</p>';
-
-  try {
-    const res = await fetch('/api/custom', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({sql})
-    });
-    const data = await res.json();
-    if (data.error) {
-      resultEl.innerHTML = '<div class="error-box">⚠ ' + escHtml(data.error) + '</div>';
-    } else {
-      resultEl.innerHTML = renderTable(data.results, data.count);
-    }
-  } catch(e) {
-    resultEl.innerHTML = '<div class="error-box">⚠ Network error: ' + escHtml(e.message) + '</div>';
-  }
-}
-
-function renderTable(rows, count) {
-  if (!rows || rows.length === 0) {
-    return '<div class="empty"><div class="empty-icon">🔍</div><p>No results found.</p></div>';
-  }
-  const cols = Object.keys(rows[0]);
-  const STATUS_BADGES = {
-    resolved:'badge-resolved', closed:'badge-closed', assigned:'badge-assigned',
-    reported:'badge-reported', verified:'badge-verified',
-    high:'badge-high', critical:'badge-critical', medium:'badge-medium', low:'badge-low',
-    finished:'badge-resolved', 'in progress':'badge-assigned',
-    'not started':'badge-reported', aborted:'badge-high'
+  const titles = {
+    'dashboard':'Dashboard','myincidents':'My Incidents','mytasks':'My Tasks',
+    'incidents':'All Incidents','tasks':'All Tasks','resources':'Resources',
+    'technicians':'Technicians','availability':'Availability','users':'Users',
+    'skills':'Skills','buildings':'Buildings','custom':'Custom SQL'
   };
-  const BADGE_COLS = new Set(['status','severity_level','current_status','task_status','priority','t1_type','t2_type']);
+  document.getElementById('main-title').textContent = titles[id] || 'Incident Management';
 
-  let html = `<div class="result-meta"><span class="result-count">📊 ${count} row${count !== 1 ? 's' : ''}</span></div>`;
+  if (id === 'dashboard') loadStats();
+  if (id === 'myincidents' || id === 'incidents') loadIncidents();
+  if (id === 'mytasks' || id === 'tasks') loadTasks();
+  if (id === 'resources') loadResources();
+  if (id === 'technicians') loadTechnicians();
+  if (id === 'availability') loadAvailability();
+  if (id === 'users') loadUsers();
+  if (id === 'skills') loadSkills();
+  if (id === 'buildings') loadBuildings();
+}
+
+async function loadStats() {
+  const el = document.getElementById('stats-content');
+  el.innerHTML = '<span class="spinner"></span>Loading...';
+  try {
+    const res = await fetch('/api/stats');
+    const data = await res.json();
+    if (data.stats) {
+      const s = data.stats;
+      el.innerHTML = '<div style="display:flex;gap:20px;flex-wrap:wrap;">' +
+        '<div class="card" style="flex:1;min-width:150px;text-align:center;"><div style="font-size:2rem;font-weight:700;color:var(--accent);">' + (s.total_incidents||0) + '</div><div style="font-size:.8rem;color:var(--muted);">Total</div></div>' +
+        '<div class="card" style="flex:1;min-width:150px;text-align:center;"><div style="font-size:2rem;font-weight:700;color:var(--yellow);">' + (s.open_incidents||0) + '</div><div style="font-size:.8rem;color:var(--muted);">Open</div></div>' +
+        '<div class="card" style="flex:1;min-width:150px;text-align:center;"><div style="font-size:2rem;font-weight:700;color:var(--green);">' + (s.closed_incidents||0) + '</div><div style="font-size:.8rem;color:var(--muted);">Closed</div></div>' +
+        '<div class="card" style="flex:1;min-width:150px;text-align:center;"><div style="font-size:2rem;font-weight:700;color:var(--red);">' + (s.critical_count||0) + '</div><div style="font-size:.8rem;color:var(--muted);">Critical</div></div>' +
+        '</div>';
+    }
+  } catch(e) { el.innerHTML = '<div class="error-box">Failed to load stats</div>'; }
+}
+
+async function loadIncidents() {
+  const el = document.getElementById(activeSection === 'myincidents' ? 'myincidents-list' : 'incidents-list');
+  el.innerHTML = '<span class="spinner"></span>Loading...';
+  try {
+    const res = await fetch('/api/incidents');
+    const data = await res.json();
+    if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
+    el.innerHTML = renderTable(data.incidents || data, ['id','reported_at','category','severity_level','status','description','building_name','reporter_name']);
+  } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
+}
+
+function showCreateIncident() {
+  populateBuildings('inc-building');
+  document.getElementById('incident-error').style.display = 'none';
+  document.getElementById('modal-incident').classList.add('active');
+}
+
+async function createIncident() {
+  const desc = document.getElementById('inc-desc').value.trim();
+  if (!desc) { showError('incident-error', 'Description required'); return; }
+  try {
+    const res = await fetch('/api/incidents', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        description: desc,
+        category: document.getElementById('inc-category').value,
+        severity_level: document.getElementById('inc-severity').value,
+        building_id: document.getElementById('inc-building').value || null,
+        floor_nr: document.getElementById('inc-floor').value || null,
+        room_nr: document.getElementById('inc-room').value || null
+      })
+    });
+    const data = await res.json();
+    if (data.error) { showError('incident-error', data.error); return; }
+    closeModal('modal-incident');
+    loadIncidents();
+    document.getElementById('inc-desc').value = '';
+  } catch(e) { showError('incident-error', 'Failed to create'); }
+}
+
+async function loadTasks() {
+  const el = document.getElementById(activeSection === 'mytasks' ? 'mytasks-list' : 'tasks-list');
+  el.innerHTML = '<span class="spinner"></span>Loading...';
+  try {
+    const res = await fetch('/api/tasks');
+    const data = await res.json();
+    if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
+    el.innerHTML = renderTable(data.tasks || data, ['id','incident_id','type','priority','task_status','estimated_duration','start_time','end_time','incident_description']);
+  } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
+}
+
+function showCreateTask() {
+  document.getElementById('task-error').style.display = 'none';
+  document.getElementById('modal-task').classList.add('active');
+}
+
+async function createTask() {
+  const incidentId = document.getElementById('task-incident').value;
+  if (!incidentId) { showError('task-error', 'Incident ID required'); return; }
+  try {
+    const res = await fetch('/api/tasks', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        incident_id: parseInt(incidentId),
+        type: document.getElementById('task-type').value,
+        priority: document.getElementById('task-priority').value,
+        estimated_duration: document.getElementById('task-duration').value,
+        start_time: document.getElementById('task-start').value || null,
+        tech_ids: (document.getElementById('task-techs').value || '').split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x)),
+        skill_ids: (document.getElementById('task-skills').value || '').split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x))
+      })
+    });
+    const data = await res.json();
+    if (data.error) { showError('task-error', data.error); return; }
+    closeModal('modal-task');
+    loadTasks();
+  } catch(e) { showError('task-error', 'Failed to create'); }
+}
+
+async function loadResources() {
+  const el = document.getElementById('resources-list');
+  el.innerHTML = '<span class="spinner"></span>Loading...';
+  try {
+    const res = await fetch('/api/resources');
+    const data = await res.json();
+    if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
+    el.innerHTML = renderTable(data.resources || data, ['id','type','building_name','floor_nr','room_nr','availability_status','description']);
+  } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
+}
+
+function showCreateResource() {
+  populateBuildings('res-building');
+  document.getElementById('resource-error').style.display = 'none';
+  document.getElementById('modal-resource').classList.add('active');
+}
+
+async function createResource() {
+  try {
+    const res = await fetch('/api/resources', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        building_id: parseInt(document.getElementById('res-building').value),
+        floor_nr: parseInt(document.getElementById('res-floor').value) || 0,
+        room_nr: parseInt(document.getElementById('res-room').value) || 0,
+        type: document.getElementById('res-type').value,
+        availability_status: document.getElementById('res-status').value,
+        description: document.getElementById('res-desc').value
+      })
+    });
+    const data = await res.json();
+    if (data.error) { showError('resource-error', data.error); return; }
+    closeModal('modal-resource');
+    loadResources();
+  } catch(e) { showError('resource-error', 'Failed to create'); }
+}
+
+async function loadUsers() {
+  const el = document.getElementById('users-list');
+  el.innerHTML = '<span class="spinner"></span>Loading...';
+  try {
+    const res = await fetch('/api/users');
+    const data = await res.json();
+    if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
+    el.innerHTML = renderTable(data.users || data, ['id','name','email','role_name']);
+  } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
+}
+
+function showCreateUser() {
+  populateRoles();
+  document.getElementById('user-error').style.display = 'none';
+  document.getElementById('modal-user').classList.add('active');
+}
+
+async function createUser() {
+  const name = document.getElementById('user-name').value.trim();
+  const email = document.getElementById('user-email').value.trim();
+  if (!name || !email) { showError('user-error', 'Name and email required'); return; }
+  try {
+    const res = await fetch('/api/users', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name, email, role_id: parseInt(document.getElementById('user-role').value)})
+    });
+    const data = await res.json();
+    if (data.error) { showError('user-error', data.error); return; }
+    closeModal('modal-user');
+    loadUsers();
+  } catch(e) { showError('user-error', 'Failed to create'); }
+}
+
+async function loadSkills() {
+  const el = document.getElementById('skills-list');
+  el.innerHTML = '<span class="spinner"></span>Loading...';
+  try {
+    const res = await fetch('/api/skills');
+    const data = await res.json();
+    if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
+    el.innerHTML = renderTable(data.skills || data, ['id','name']);
+  } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
+}
+
+function showCreateSkill() {
+  document.getElementById('skill-error').style.display = 'none';
+  document.getElementById('modal-skill').classList.add('active');
+}
+
+async function createSkill() {
+  const name = document.getElementById('skill-name').value.trim();
+  if (!name) { showError('skill-error', 'Skill name required'); return; }
+  try {
+    const res = await fetch('/api/skills', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name})
+    });
+    const data = await res.json();
+    if (data.error) { showError('skill-error', data.error); return; }
+    closeModal('modal-skill');
+    loadSkills();
+  } catch(e) { showError('skill-error', 'Failed to create'); }
+}
+
+async function loadTechnicians() {
+  const el = document.getElementById('technicians-list');
+  el.innerHTML = '<span class="spinner"></span>Loading...';
+  try {
+    const res = await fetch('/api/technicians');
+    const data = await res.json();
+    if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
+    el.innerHTML = renderTable(data.technicians || data, ['tech_id','name','email','role','employement_status']);
+  } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
+}
+
+async function loadAvailability() {
+  const el = document.getElementById('availability-list');
+  el.innerHTML = '<span class="spinner"></span>Loading...';
+  try {
+    const res = await fetch('/api/availability');
+    const data = await res.json();
+    if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
+    el.innerHTML = renderTable(data.availability || data, ['tech_id','tech_name','day','start_time','end_time']);
+  } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
+}
+
+function showCreateAvailability() {
+  document.getElementById('availability-error').style.display = 'none';
+  document.getElementById('modal-availability').classList.add('active');
+}
+
+async function createAvailability() {
+  try {
+    const res = await fetch('/api/availability', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        tech_id: parseInt(document.getElementById('avail-tech').value),
+        day: document.getElementById('avail-day').value,
+        start_time: document.getElementById('avail-start').value,
+        end_time: document.getElementById('avail-end').value
+      })
+    });
+    const data = await res.json();
+    if (data.error) { showError('availability-error', data.error); return; }
+    closeModal('modal-availability');
+    loadAvailability();
+  } catch(e) { showError('availability-error', 'Failed to create'); }
+}
+
+async function loadBuildings() {
+  const el = document.getElementById('buildings-list');
+  el.innerHTML = '<span class="spinner"></span>Loading...';
+  try {
+    const res = await fetch('/api/buildings');
+    const data = await res.json();
+    if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
+    el.innerHTML = renderTable(data.buildings || data, ['id','name','address']);
+  } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
+}
+
+function populateBuildings(selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select building...</option>';
+  (appData.buildings || []).forEach(b => {
+    sel.innerHTML += '<option value="' + b.id + '">' + escHtml(b.name) + '</option>';
+  });
+}
+
+function populateRoles() {
+  const sel = document.getElementById('user-role');
+  if (!sel) return;
+  sel.innerHTML = '';
+  (appData.roles || []).forEach(r => {
+    sel.innerHTML += '<option value="' + r.id + '">' + escHtml(r.name) + '</option>';
+  });
+}
+
+async function loadInitialData() {
+  try {
+    const [b, r, s] = await Promise.all([
+      fetch('/api/buildings').then(r=>r.json()),
+      fetch('/api/roles').then(r=>r.json()),
+      fetch('/api/skills').then(r=>r.json())
+    ]);
+    appData.buildings = b.buildings || [];
+    appData.roles = r.roles || [];
+    appData.skills = s.skills || [];
+  } catch(e) {}
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+function showError(elId, msg) {
+  const el = document.getElementById(elId);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function renderTable(rows, cols) {
+  if (!rows || rows.length === 0) return '<div class="empty"><div class="empty-icon">🔍</div><p>No results found.</p></div>';
+  if (typeof cols === 'undefined') cols = Object.keys(rows[0]);
+  const STATUS_BADGES = {
+    resolved:'badge-resolved', closed:'badge-closed', assigned:'badge-assigned', reported:'badge-reported', verified:'badge-verified',
+    high:'badge-high', critical:'badge-critical', medium:'badge-medium', low:'badge-low',
+    finished:'badge-finished', 'not started':'badge-notstarted', 'in progress':'badge-inprogress', aborted:'badge-aborted'
+  };
+  const BADGE_COLS = new Set(['status','severity_level','task_status','priority','availability_status']);
+  let html = '<div class="result-meta"><span class="result-count">' + rows.length + ' row' + (rows.length !== 1 ? 's' : '') + '</span></div>';
   html += '<div class="table-wrap"><table><thead><tr>';
-  cols.forEach(c => { html += `<th>${escHtml(c.replace(/_/g,' '))}</th>`; });
+  cols.forEach(c => { html += '<th>' + escHtml(c.replace(/_/g,' ')) + '</th>'; });
   html += '</tr></thead><tbody>';
-
   rows.forEach(row => {
     html += '<tr>';
     cols.forEach(c => {
       const val = row[c];
       let cell = '';
-      if (val === null || val === undefined) {
-        cell = '<span style="color:var(--muted)">—</span>';
-      } else if (BADGE_COLS.has(c)) {
+      if (val === null || val === undefined) { cell = '<span style="color:var(--muted)">—</span>'; }
+      else if (BADGE_COLS.has(c)) {
         const key = String(val).toLowerCase();
         const cls = STATUS_BADGES[key] || '';
-        cell = cls ? `<span class="badge ${cls}">${escHtml(String(val))}</span>` : escHtml(String(val));
-      } else {
-        cell = escHtml(String(val));
-      }
-      html += `<td>${cell}</td>`;
+        cell = cls ? '<span class="badge ' + cls + '">' + escHtml(String(val)) + '</span>' : escHtml(String(val));
+      } else { cell = escHtml(String(val)); }
+      html += '<td>' + cell + '</td>';
     });
     html += '</tr>';
   });
@@ -385,25 +1034,47 @@ function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// Health check
+async function runQuery(qid) {
+  const q = QUERY_META[qid];
+  const params = {};
+  for (const p of (q.params || [])) {
+    const el = document.getElementById('param-' + qid + '-' + p.name);
+    params[p.name] = el ? el.value : '';
+  }
+  const resultEl = document.getElementById('result-' + qid);
+  resultEl.innerHTML = '<p><span class="spinner"></span>Running...</p>';
+  try {
+    const res = await fetch('/api/run/' + qid, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(params) });
+    const data = await res.json();
+    if (data.error) { resultEl.innerHTML = '<div class="error-box">⚠ ' + escHtml(data.error) + '</div>'; }
+    else { resultEl.innerHTML = renderTable(data.results, data.count); }
+  } catch(e) { resultEl.innerHTML = '<div class="error-box">⚠ Network error</div>'; }
+}
+
+async function runCustom() {
+  const sql = document.getElementById('custom-sql').value.trim();
+  if (!sql) return;
+  const resultEl = document.getElementById('result-custom');
+  resultEl.innerHTML = '<p><span class="spinner"></span>Running...</p>';
+  try {
+    const res = await fetch('/api/custom', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({sql}) });
+    const data = await res.json();
+    if (data.error) { resultEl.innerHTML = '<div class="error-box">⚠ ' + escHtml(data.error) + '</div>'; }
+    else { resultEl.innerHTML = renderTable(data.results, data.count); }
+  } catch(e) { resultEl.innerHTML = '<div class="error-box">⚠ Network error</div>'; }
+}
+
 async function checkHealth() {
   try {
     const res = await fetch('/api/health');
     const data = await res.json();
     const dot = document.getElementById('health-dot');
-    const status = document.getElementById('health-status');
-    if (data.status === 'ok') {
-      dot.className = 'health-dot ok';
-      status.innerHTML = '<span class="health-dot ok"></span>Database connected';
-    } else {
-      dot.className = 'health-dot err';
-      status.innerHTML = '<span class="health-dot err"></span>DB error: ' + escHtml(data.db);
-    }
-  } catch(e) {
-    document.getElementById('health-status').innerHTML = '<span class="health-dot err"></span>No connection';
-  }
+    if (data.status === 'ok') { dot.className='health-dot ok'; document.getElementById('health-status').innerHTML='<span class="health-dot ok"></span>DB Connected'; }
+    else { dot.className='health-dot err'; document.getElementById('health-status').innerHTML='<span class="health-dot err"></span>DB Error'; }
+  } catch(e) { document.getElementById('health-status').innerHTML='<span class="health-dot err"></span>No Connection'; }
 }
 
+checkAuth();
 checkHealth();
 </script>
 </body>
