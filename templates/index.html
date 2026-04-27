@@ -238,6 +238,12 @@
         <div class="card-desc">Overview of the incident management system</div>
         <div id="stats-content"><span class="spinner"></span>Loading...</div>
       </div>
+      <div class="card">
+        <div class="card-title">Report an Incident</div>
+        <div class="card-desc">Submit a new incident report</div>
+        <button class="btn btn-primary" onclick="showCreateIncident()" style="margin-bottom:16px;">Report New Incident</button>
+        <div id="public-incidents-list"></div>
+      </div>
     </div>
 
     <!-- My Incidents -->
@@ -333,6 +339,7 @@
       <div class="card">
         <div class="card-title">Buildings</div>
         <div class="card-desc">Campus buildings</div>
+        <button class="btn btn-primary" onclick="showCreateBuilding()" style="margin-bottom:16px;">Add Building</button>
         <div id="buildings-list"></div>
       </div>
     </div>
@@ -408,7 +415,7 @@
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label>Building</label>
+        <label>Building *</label>
         <select id="inc-building"></select>
       </div>
       <div class="form-group">
@@ -418,6 +425,12 @@
       <div class="form-group">
         <label>Room</label>
         <input type="number" id="inc-room" placeholder="100">
+      </div>
+    </div>
+    <div class="form-row" id="inc-email-row">
+      <div class="form-group">
+        <label>Your Email (optional, to track your reports)</label>
+        <input type="email" id="inc-email" placeholder="email@example.com">
       </div>
     </div>
     <div style="display:flex;gap:10px;margin-top:16px;">
@@ -617,6 +630,28 @@
   </div>
 </div>
 
+<!-- Create Building Modal -->
+<div class="modal-overlay" id="modal-building">
+  <div class="modal">
+    <h3>Add Building</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Building Name *</label>
+        <input type="text" id="building-name" placeholder="e.g. Library Building A">
+      </div>
+      <div class="form-group">
+        <label>Address</label>
+        <input type="text" id="building-address" placeholder="Street address">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-primary" onclick="createBuilding()">Add Building</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-building')">Cancel</button>
+    </div>
+    <p id="building-error" style="color:var(--red);font-size:.8rem;margin-top:8px;display:none;"></p>
+  </div>
+</div>
+
 <script>
 const QUERY_META = {{ queries | tojson }};
 let activeSection = 'dashboard';
@@ -634,6 +669,7 @@ async function checkAuth() {
       showLoginUI();
     }
   } catch(e) { showLoginUI(); }
+  loadInitialData();
 }
 
 function showUserUI() {
@@ -734,38 +770,47 @@ async function loadIncidents() {
     const res = await fetch('/api/incidents');
     const data = await res.json();
     if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
-    el.innerHTML = renderTable(data.incidents || data, ['id','reported_at','category','severity_level','status','description','building_name','reporter_name']);
+    el.innerHTML = renderTable(data.incidents || [], ['id','reported_at','category','severity_level','status','description','building_name','floor_nr','room_nr']);
   } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
 }
 
 function showCreateIncident() {
   populateBuildings('inc-building');
   document.getElementById('incident-error').style.display = 'none';
+  document.getElementById('inc-email-row').style.display = currentUser ? 'none' : '';
   document.getElementById('modal-incident').classList.add('active');
 }
 
 async function createIncident() {
   const desc = document.getElementById('inc-desc').value.trim();
   const category = document.getElementById('inc-category').value;
+  const building_id = document.getElementById('inc-building').value;
   if (!desc || !category) { showError('incident-error', 'Description and category required'); return; }
+  if (!building_id) { showError('incident-error', 'Building is required'); return; }
   try {
+    const body = {
+      description: desc,
+      category: category,
+      severity_level: document.getElementById('inc-severity').value,
+      building_id: building_id,
+      floor_nr: document.getElementById('inc-floor').value || null,
+      room_nr: document.getElementById('inc-room').value || null
+    };
+    if (!currentUser && document.getElementById('inc-email').value.trim()) {
+      body.reporter_email = document.getElementById('inc-email').value.trim();
+    }
     const res = await fetch('/api/incidents', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        description: desc,
-        category: category,
-        severity_level: document.getElementById('inc-severity').value,
-        building_id: document.getElementById('inc-building').value || null,
-        floor_nr: document.getElementById('inc-floor').value || null,
-        room_nr: document.getElementById('inc-room').value || null
-      })
+      body:JSON.stringify(body)
     });
     const data = await res.json();
     if (data.error) { showError('incident-error', data.error); return; }
     closeModal('modal-incident');
     document.getElementById('inc-desc').value = '';
+    document.getElementById('inc-email').value = '';
     if (activeSection === 'myincidents' || activeSection === 'incidents') loadIncidents();
     loadStats();
+    alert('Incident reported successfully! ID: ' + data.id);
   } catch(e) { showError('incident-error', 'Failed to create: ' + e.message); }
 }
 
@@ -776,7 +821,7 @@ async function loadTasks() {
     const res = await fetch('/api/tasks');
     const data = await res.json();
     if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
-    el.innerHTML = renderTable(data.tasks || data, ['id','incident_id','type','priority','task_status','estimated_duration','start_time','end_time','incident_description']);
+    el.innerHTML = renderTable(data.tasks || [], ['id','incident_id','type','priority','task_status','estimated_duration','start_time','end_time','incident_category','assigned_technicians']);
   } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
 }
 
@@ -965,6 +1010,31 @@ async function loadBuildings() {
   } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
 }
 
+function showCreateBuilding() {
+  document.getElementById('building-error').style.display = 'none';
+  document.getElementById('modal-building').classList.add('active');
+}
+
+async function createBuilding() {
+  const name = document.getElementById('building-name').value.trim();
+  const address = document.getElementById('building-address').value.trim();
+  if (!name) { showError('building-error', 'Building name required'); return; }
+  try {
+    const res = await fetch('/api/buildings', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name, address})
+    });
+    const data = await res.json();
+    if (data.error) { showError('building-error', data.error); return; }
+    closeModal('modal-building');
+    document.getElementById('building-name').value = '';
+    document.getElementById('building-address').value = '';
+    loadBuildings();
+    appData.buildings = [];
+    loadInitialData();
+  } catch(e) { showError('building-error', 'Failed to create'); }
+}
+
 function populateBuildings(selectId) {
   const sel = document.getElementById(selectId);
   if (!sel) return;
@@ -994,6 +1064,15 @@ async function loadInitialData() {
     appData.roles = r.roles || [];
     appData.skills = s.skills || [];
   } catch(e) {}
+}
+
+function showLoginUI() {
+  document.getElementById('login-area').style.display = 'block';
+  document.getElementById('user-area').style.display = 'none';
+  document.getElementById('nav-crud').style.display = 'none';
+  document.getElementById('nav-queries').style.display = 'none';
+  currentUser = null;
+  loadInitialData();
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }

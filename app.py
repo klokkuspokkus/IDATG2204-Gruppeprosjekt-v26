@@ -132,7 +132,15 @@ def get_me():
 @app.route('/api/stats')
 def public_stats():
     try:
-        results, error = execute_query("SELECT * FROM public_view_stats")
+        results, error = execute_query(
+            "SELECT "
+            "COUNT(*) AS total_incidents, "
+            "SUM(CASE WHEN status NOT IN ('resolved', 'closed') THEN 1 ELSE 0 END) AS open_incidents, "
+            "SUM(CASE WHEN status IN ('resolved', 'closed') THEN 1 ELSE 0 END) AS closed_incidents, "
+            "SUM(CASE WHEN severity_level = 'Critical' THEN 1 ELSE 0 END) AS critical_count, "
+            "SUM(CASE WHEN severity_level = 'High' THEN 1 ELSE 0 END) AS high_count "
+            "FROM incident"
+        )
         if error:
             return jsonify({"error": error, "stats": None}), 500
         return jsonify({"stats": results[0] if results else {}})
@@ -228,17 +236,28 @@ def list_incidents():
     
     if role in ['student', 'staff', 'public_user']:
         results, error = execute_query(
-            "SELECT i.*, b.name AS building_name, u.name AS reporter_name "
+            "SELECT i.id, i.reported_at, i.severity_level, i.description, i.category, i.status, "
+            "b.name AS building_name, il.floor_nr, il.room_nr "
+            "FROM user_incidents_view i "
+            "LEFT JOIN incident_location il ON i.id = il.incident_id "
+            "LEFT JOIN building b ON il.building_id = b.id "
+            "WHERE i.user_id = %s ORDER BY i.reported_at DESC",
+            (user_id,)
+        )
+    elif role == 'technician':
+        results, error = execute_query(
+            "SELECT i.id, i.reported_at, i.severity_level, i.description, i.category, i.status, "
+            "b.name AS building_name, u.name AS reporter_name "
             "FROM incident i "
             "LEFT JOIN incident_location il ON i.id = il.incident_id "
             "LEFT JOIN building b ON il.building_id = b.id "
             "LEFT JOIN user u ON i.user_id = u.id "
-            "WHERE i.user_id = %s ORDER BY i.reported_at DESC",
-            (user_id,)
+            "ORDER BY i.reported_at DESC"
         )
     else:
         results, error = execute_query(
-            "SELECT i.*, b.name AS building_name, u.name AS reporter_name, u.email AS reporter_email "
+            "SELECT i.id, i.reported_at, i.severity_level, i.description, i.category, i.status, "
+            "b.name AS building_name, u.name AS reporter_name, u.email AS reporter_email "
             "FROM incident i "
             "LEFT JOIN incident_location il ON i.id = il.incident_id "
             "LEFT JOIN building b ON il.building_id = b.id "
@@ -292,7 +311,6 @@ def get_incident(incident_id):
     return jsonify({"incident": incident})
 
 @app.route('/api/incidents', methods=['POST'])
-@login_required
 def create_incident():
     data = request.json or {}
     description = data.get('description', '').strip()
@@ -301,9 +319,21 @@ def create_incident():
     building_id = data.get('building_id')
     floor_nr = data.get('floor_nr')
     room_nr = data.get('room_nr')
+    reporter_email = data.get('reporter_email', '').strip()
     
     if not description or not category:
         return jsonify({"error": "Description and category are required"}), 400
+    
+    if not building_id:
+        return jsonify({"error": "Building is required"}), 400
+    
+    user_id = None
+    if 'user_id' in session:
+        user_id = session['user_id']
+    elif reporter_email:
+        results, _ = execute_query("SELECT id FROM user WHERE email = %s", (reporter_email,))
+        if results:
+            user_id = results[0]['id']
     
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
@@ -311,7 +341,7 @@ def create_incident():
         cursor.execute(
             "INSERT INTO incident (user_id, reported_at, severity_level, description, category, status) "
             "VALUES (%s, %s, %s, %s, %s, 'reported')",
-            (session['user_id'], datetime.now(), severity_level, description, category)
+            (user_id, datetime.now(), severity_level, description, category)
         )
         incident_id = cursor.lastrowid
         
@@ -442,29 +472,20 @@ def list_tasks():
     
     if role == 'technician':
         results, error = execute_query(
-            "SELECT mt.*, i.description AS incident_description, i.category, "
-            "b.name AS building_name, il.floor_nr, il.room_nr "
-            "FROM maintenance_task mt "
-            "INNER JOIN technician_work tw ON mt.id = tw.task_id "
-            "INNER JOIN incident i ON mt.incident_id = i.id "
-            "LEFT JOIN incident_location il ON i.id = il.incident_id "
-            "LEFT JOIN building b ON il.building_id = b.id "
-            "WHERE tw.tech_id = %s "
+            "SELECT mt.id, mt.incident_id, mt.type, mt.priority, mt.task_status, mt.estimated_duration, "
+            "mt.start_time, mt.end_time, mt.incident_description, mt.incident_category, mt.severity_level, "
+            "mt.building_name, mt.floor_nr, mt.room_nr, mt.technician_name "
+            "FROM technician_tasks_view mt "
+            "WHERE mt.tech_id = %s "
             "ORDER BY mt.start_time DESC",
             (user_id,)
         )
     elif role in ['manager', 'administrator']:
         results, error = execute_query(
-            "SELECT mt.*, i.description AS incident_description, i.category, i.severity_level, "
-            "b.name AS building_name, il.floor_nr, il.room_nr, "
-            "GROUP_CONCAT(u.name SEPARATOR ', ') AS assigned_technicians "
-            "FROM maintenance_task mt "
-            "INNER JOIN incident i ON mt.incident_id = i.id "
-            "LEFT JOIN incident_location il ON i.id = il.incident_id "
-            "LEFT JOIN building b ON il.building_id = b.id "
-            "LEFT JOIN technician_work tw ON mt.id = tw.task_id "
-            "LEFT JOIN user u ON tw.tech_id = u.id "
-            "GROUP BY mt.id "
+            "SELECT mt.id, mt.incident_id, mt.type, mt.priority, mt.task_status, mt.estimated_duration, "
+            "mt.start_time, mt.end_time, mt.incident_category, mt.severity_level, "
+            "mt.building_name, mt.floor_nr, mt.room_nr, mt.assigned_technicians "
+            "FROM manager_tasks_view mt "
             "ORDER BY mt.start_time DESC"
         )
     else:
@@ -933,6 +954,23 @@ def list_buildings():
     if error:
         return jsonify({"error": error}), 500
     return jsonify({"buildings": results})
+
+@app.route('/api/buildings', methods=['POST'])
+def create_building():
+    data = request.json or {}
+    name = data.get('name', '').strip()
+    address = data.get('address', '').strip()
+    
+    if not name:
+        return jsonify({"error": "Building name is required"}), 400
+    
+    result, error = execute_write(
+        "INSERT INTO building (name, address) VALUES (%s, %s)",
+        (name, address)
+    )
+    if error:
+        return jsonify({"error": error}), 500
+    return jsonify({"message": "Building created", "id": result['last_insert_id']}), 201
 
 @app.route('/api/roles', methods=['GET'])
 @login_required
