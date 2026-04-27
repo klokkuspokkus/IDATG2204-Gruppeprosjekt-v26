@@ -1,5 +1,13 @@
 # IDATG2204 – Incident Management Dashboard
 
+The database must support different access levels:
+• Public users: report incidents and view limited public statistics
+• Students and staff: report incidents and track their own reports
+• Technicians: view assigned tasks and update task progress
+• Managers: assign tasks and resources, override schedules
+• Administrators: full system access
+Access control must be enforced at the database level where applicable.
+
 Flask-webapplikasjon som kjører som en Docker-container og kobler seg til
 din XAMPP MariaDB-database.
 

@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from functools import wraps
 import mysql.connector
 import os
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-prod')
@@ -131,10 +131,13 @@ def get_me():
 
 @app.route('/api/stats')
 def public_stats():
-    results, error = execute_query("SELECT * FROM public_view_stats")
-    if error:
-        return jsonify({"error": error}), 500
-    return jsonify({"stats": results[0] if results else {}})
+    try:
+        results, error = execute_query("SELECT * FROM public_view_stats")
+        if error:
+            return jsonify({"error": error, "stats": None}), 500
+        return jsonify({"stats": results[0] if results else {}})
+    except Exception as e:
+        return jsonify({"error": str(e), "stats": None}), 500
 
 # ── User Management ────────────────────────────────────────────────────────────
 
@@ -223,7 +226,7 @@ def list_incidents():
     role = session.get('role_name')
     user_id = session.get('user_id')
     
-    if role in ['public_user', 'public']:
+    if role in ['student', 'staff', 'public_user']:
         results, error = execute_query(
             "SELECT i.*, b.name AS building_name, u.name AS reporter_name "
             "FROM incident i "
@@ -268,7 +271,7 @@ def get_incident(incident_id):
     incident = results[0]
     role = session.get('role_name')
     
-    if role in ['public_user', 'public', 'student'] and incident['user_id'] != session.get('user_id'):
+    if role in ['student', 'staff', 'public_user'] and incident['user_id'] != session.get('user_id'):
         return jsonify({"error": "Access denied"}), 403
     
     history, _ = execute_query(
@@ -319,10 +322,11 @@ def create_incident():
                 (incident_id, building_id, floor_nr, room_nr)
             )
         
+        time_now = datetime.now()
         cursor.execute(
             "INSERT INTO incident_history (time_from, time_to, incident_id, status_type) "
             "VALUES (%s, %s, %s, 'reported')",
-            (datetime.now(), datetime.now(), incident_id)
+            (time_now, time_now + timedelta(seconds=1), incident_id)
         )
         
         conn.commit()
@@ -379,7 +383,7 @@ def update_incident(incident_id):
             cursor.execute(
                 "INSERT INTO incident_history (time_from, time_to, incident_id, status_type) "
                 "VALUES (%s, %s, %s, %s)",
-                (datetime.now(), datetime.now(), incident_id, status)
+                (datetime.now(), datetime.now() + timedelta(seconds=1), incident_id, status)
             )
         
         conn.commit()
@@ -572,7 +576,7 @@ def create_task():
         cursor.execute(
             "INSERT INTO status_history (task_id, time_started, time_ended, type) "
             "VALUES (%s, %s, %s, 'Not started')",
-            (task_id, datetime.now(), datetime.now())
+            (task_id, datetime.now(), datetime.now() + timedelta(seconds=1))
         )
         
         conn.commit()
@@ -634,7 +638,7 @@ def update_task(task_id):
             cursor.execute(
                 "INSERT INTO status_history (task_id, time_started, time_ended, type) "
                 "VALUES (%s, %s, %s, %s)",
-                (task_id, datetime.now(), datetime.now(), task_status)
+                (task_id, datetime.now(), datetime.now() + timedelta(seconds=1), task_status)
             )
         
         conn.commit()
@@ -1067,7 +1071,7 @@ def run_query(query_id):
         return jsonify({"error": "Unknown query"}), 404
     
     role = session.get('role_name')
-    if role in ['public_user', 'public', 'student']:
+    if role in ['student', 'staff', 'public_user']:
         return jsonify({"error": "Insufficient privileges for predefined queries"}), 403
     
     q = QUERIES[query_id]

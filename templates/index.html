@@ -711,16 +711,20 @@ async function loadStats() {
   try {
     const res = await fetch('/api/stats');
     const data = await res.json();
+    if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
     if (data.stats) {
       const s = data.stats;
-      el.innerHTML = '<div style="display:flex;gap:20px;flex-wrap:wrap;">' +
-        '<div class="card" style="flex:1;min-width:150px;text-align:center;"><div style="font-size:2rem;font-weight:700;color:var(--accent);">' + (s.total_incidents||0) + '</div><div style="font-size:.8rem;color:var(--muted);">Total</div></div>' +
-        '<div class="card" style="flex:1;min-width:150px;text-align:center;"><div style="font-size:2rem;font-weight:700;color:var(--yellow);">' + (s.open_incidents||0) + '</div><div style="font-size:.8rem;color:var(--muted);">Open</div></div>' +
-        '<div class="card" style="flex:1;min-width:150px;text-align:center;"><div style="font-size:2rem;font-weight:700;color:var(--green);">' + (s.closed_incidents||0) + '</div><div style="font-size:.8rem;color:var(--muted);">Closed</div></div>' +
-        '<div class="card" style="flex:1;min-width:150px;text-align:center;"><div style="font-size:2rem;font-weight:700;color:var(--red);">' + (s.critical_count||0) + '</div><div style="font-size:.8rem;color:var(--muted);">Critical</div></div>' +
+      el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;">' +
+        '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:20px;text-align:center;"><div style="font-size:2rem;font-weight:700;color:var(--accent);">' + (s.total_incidents||0) + '</div><div style="font-size:.8rem;color:var(--muted);margin-top:4px;">Total Incidents</div></div>' +
+        '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:20px;text-align:center;"><div style="font-size:2rem;font-weight:700;color:var(--yellow);">' + (s.open_incidents||0) + '</div><div style="font-size:.8rem;color:var(--muted);margin-top:4px;">Open</div></div>' +
+        '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:20px;text-align:center;"><div style="font-size:2rem;font-weight:700;color:var(--green);">' + (s.closed_incidents||0) + '</div><div style="font-size:.8rem;color:var(--muted);margin-top:4px;">Closed</div></div>' +
+        '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:20px;text-align:center;"><div style="font-size:2rem;font-weight:700;color:var(--red);">' + (s.critical_count||0) + '</div><div style="font-size:.8rem;color:var(--muted);margin-top:4px;">Critical</div></div>' +
+        '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:20px;text-align:center;"><div style="font-size:2rem;font-weight:700;color:orange;">' + (s.high_count||0) + '</div><div style="font-size:.8rem;color:var(--muted);margin-top:4px;">High Priority</div></div>' +
         '</div>';
+    } else {
+      el.innerHTML = '<div class="error-box">No stats data returned</div>';
     }
-  } catch(e) { el.innerHTML = '<div class="error-box">Failed to load stats</div>'; }
+  } catch(e) { el.innerHTML = '<div class="error-box">Failed to load stats: ' + escHtml(e.message) + '</div>'; }
 }
 
 async function loadIncidents() {
@@ -742,13 +746,14 @@ function showCreateIncident() {
 
 async function createIncident() {
   const desc = document.getElementById('inc-desc').value.trim();
-  if (!desc) { showError('incident-error', 'Description required'); return; }
+  const category = document.getElementById('inc-category').value;
+  if (!desc || !category) { showError('incident-error', 'Description and category required'); return; }
   try {
     const res = await fetch('/api/incidents', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         description: desc,
-        category: document.getElementById('inc-category').value,
+        category: category,
         severity_level: document.getElementById('inc-severity').value,
         building_id: document.getElementById('inc-building').value || null,
         floor_nr: document.getElementById('inc-floor').value || null,
@@ -758,9 +763,10 @@ async function createIncident() {
     const data = await res.json();
     if (data.error) { showError('incident-error', data.error); return; }
     closeModal('modal-incident');
-    loadIncidents();
     document.getElementById('inc-desc').value = '';
-  } catch(e) { showError('incident-error', 'Failed to create'); }
+    if (activeSection === 'myincidents' || activeSection === 'incidents') loadIncidents();
+    loadStats();
+  } catch(e) { showError('incident-error', 'Failed to create: ' + e.message); }
 }
 
 async function loadTasks() {
