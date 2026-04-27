@@ -246,13 +246,16 @@ def list_incidents():
         )
     elif role == 'technician':
         results, error = execute_query(
-            "SELECT i.id, i.reported_at, i.severity_level, i.description, i.category, i.status, "
-            "b.name AS building_name, u.name AS reporter_name "
+            "SELECT DISTINCT i.id, i.reported_at, i.severity_level, i.description, i.category, i.status, "
+            "b.name AS building_name "
             "FROM incident i "
+            "INNER JOIN maintenance_task mt ON mt.incident_id = i.id "
+            "INNER JOIN technician_work tw ON mt.id = tw.task_id "
             "LEFT JOIN incident_location il ON i.id = il.incident_id "
             "LEFT JOIN building b ON il.building_id = b.id "
-            "LEFT JOIN user u ON i.user_id = u.id "
-            "ORDER BY i.reported_at DESC"
+            "WHERE tw.tech_id = %s "
+            "ORDER BY i.reported_at DESC",
+            (user_id,)
         )
     else:
         results, error = execute_query(
@@ -473,7 +476,7 @@ def list_tasks():
     if role == 'technician':
         results, error = execute_query(
             "SELECT mt.id, mt.incident_id, mt.type, mt.priority, mt.task_status, mt.estimated_duration, "
-            "mt.start_time, mt.end_time, mt.incident_description, mt.incident_category, mt.severity_level, "
+            "mt.start_time, mt.end_time, mt.incident_category, mt.severity_level, "
             "mt.building_name, mt.floor_nr, mt.room_nr, mt.technician_name "
             "FROM technician_tasks_view mt "
             "WHERE mt.tech_id = %s "
@@ -490,9 +493,9 @@ def list_tasks():
         )
     else:
         results, error = execute_query(
-            "SELECT mt.*, i.description AS incident_description, i.category "
+            "SELECT mt.id, mt.incident_id, mt.type, mt.priority, mt.task_status, mt.estimated_duration, "
+            "mt.start_time, mt.end_time "
             "FROM maintenance_task mt "
-            "INNER JOIN incident i ON mt.incident_id = i.id "
             "ORDER BY mt.start_time DESC"
         )
     
@@ -774,9 +777,9 @@ def list_resources():
         return jsonify({"error": "Access denied"}), 403
     
     results, error = execute_query(
-        "SELECT re.*, f.floor_nr FROM resource_equipment re "
-        "LEFT JOIN floor f ON re.building_id = f.building_id AND re.floor_nr = f.floor_nr "
-        "ORDER BY re.type, re.building_name"
+        "SELECT r.*, b.name AS building_name FROM resource r "
+        "LEFT JOIN building b ON r.building_id = b.id "
+        "ORDER BY r.type, b.name"
     )
     if error:
         return jsonify({"error": error}), 500

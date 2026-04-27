@@ -821,7 +821,7 @@ async function loadTasks() {
     const res = await fetch('/api/tasks');
     const data = await res.json();
     if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
-    el.innerHTML = renderTable(data.tasks || [], ['id','incident_id','type','priority','task_status','estimated_duration','start_time','end_time','incident_category','assigned_technicians']);
+    el.innerHTML = renderTable(data.tasks || [], ['id','incident_id','type','priority','task_status','estimated_duration','start_time','end_time','incident_category','severity_level','building_name','floor_nr','room_nr','technician_name','assigned_technicians']);
   } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
 }
 
