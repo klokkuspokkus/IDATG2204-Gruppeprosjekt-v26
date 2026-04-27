@@ -1,12 +1,10 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from functools import wraps
-from flask_cors import CORS
 import mysql.connector
 import os
 from datetime import datetime, date, timedelta
 
 app = Flask(__name__)
-CORS(app)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-prod')
 
 DB_CONFIG = {
@@ -332,6 +330,25 @@ def create_incident():
     if not building_id:
         return jsonify({"error": "Building is required"}), 400
     
+    if floor_nr is not None and room_nr is not None:
+        floor_check, floor_err = execute_query(
+            "SELECT 1 FROM floor WHERE floor_nr = %s AND building_id = %s",
+            (floor_nr, building_id)
+        )
+        if floor_err:
+            return jsonify({"error": floor_err}), 500
+        if not floor_check:
+            return jsonify({"error": f"Floor {floor_nr} does not exist in this building"}), 400
+        
+        room_check, room_err = execute_query(
+            "SELECT 1 FROM room WHERE room_nr = %s AND floor_nr = %s AND building_id = %s",
+            (room_nr, floor_nr, building_id)
+        )
+        if room_err:
+            return jsonify({"error": room_err}), 500
+        if not room_check:
+            return jsonify({"error": f"Room {room_nr} does not exist on floor {floor_nr} in this building"}), 400
+    
     user_id = None
     if 'user_id' in session:
         user_id = session['user_id']
@@ -478,7 +495,7 @@ def list_tasks():
     if role == 'technician':
         results, error = execute_query(
             "SELECT mt.id, mt.incident_id, mt.type, mt.priority, mt.task_status, mt.estimated_duration, "
-            "mt.start_time, mt.end_time, mt.incident_category, mt.severity_level, "
+            "mt.start_time, mt.end_time, mt.incident_category, mt.severity_level, mt.incident_status, "
             "mt.building_name, mt.floor_nr, mt.room_nr, mt.technician_name "
             "FROM technician_tasks_view mt "
             "WHERE mt.tech_id = %s "
