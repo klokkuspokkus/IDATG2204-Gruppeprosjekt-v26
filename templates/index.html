@@ -1132,8 +1132,8 @@ async function runQuery(qid) {
     const res = await fetch('/api/run/' + qid, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(params) });
     const data = await res.json();
     if (data.error) { resultEl.innerHTML = '<div class="error-box">⚠ ' + escHtml(data.error) + '</div>'; }
-    else { resultEl.innerHTML = renderTable(data.results, data.count); }
-  } catch(e) { resultEl.innerHTML = '<div class="error-box">⚠ Network error</div>'; }
+    else { resultEl.innerHTML = renderTable(data.results); }
+  } catch(e) { resultEl.innerHTML = '<div class="error-box">⚠ Error: ' + escHtml(e.message) + '</div>'; }
 }
 
 async function runCustom() {
@@ -1145,8 +1145,8 @@ async function runCustom() {
     const res = await fetch('/api/custom', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({sql}) });
     const data = await res.json();
     if (data.error) { resultEl.innerHTML = '<div class="error-box">⚠ ' + escHtml(data.error) + '</div>'; }
-    else { resultEl.innerHTML = renderTable(data.results, data.count); }
-  } catch(e) { resultEl.innerHTML = '<div class="error-box">⚠ Network error</div>'; }
+    else { resultEl.innerHTML = renderTable(data.results); }
+  } catch(e) { resultEl.innerHTML = '<div class="error-box">⚠ Error: ' + escHtml(e.message) + '</div>'; }
 }
 
 async function checkHealth() {

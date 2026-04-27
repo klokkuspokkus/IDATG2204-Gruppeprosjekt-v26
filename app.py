@@ -1,10 +1,12 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from functools import wraps
+from flask_cors import CORS
 import mysql.connector
 import os
 from datetime import datetime, date, timedelta
 
 app = Flask(__name__)
+CORS(app)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-prod')
 
 DB_CONFIG = {

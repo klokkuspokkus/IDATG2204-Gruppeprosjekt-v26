@@ -1081,16 +1081,7 @@ ALTER TABLE `skill_requirement`
 ALTER TABLE `technician`
   ADD CONSTRAINT `technician_ibfk_1` FOREIGN KEY (`tech_id`) REFERENCES `user` (`id`) ON UPDATE CASCADE;
 
--- Roles and permissions
-
-CREATE ROLE IF NOT EXISTS `public`;
-CREATE ROLE IF NOT EXISTS `studentstaff`;
-CREATE ROLE IF NOT EXISTS `technician`;
-CREATE ROLE IF NOT EXISTS `manager`;
-CREATE ROLE IF NOT EXISTS `admin`;
-
--- Views for role-based access
-
+-- View incident stats without personal data
 DROP VIEW IF EXISTS `public_view_stats`;
 CREATE VIEW `public_view_stats` AS
 SELECT 
@@ -1098,96 +1089,85 @@ SELECT
     SUM(CASE WHEN status NOT IN ('resolved', 'closed') THEN 1 ELSE 0 END) AS open_incidents,
     SUM(CASE WHEN status IN ('resolved', 'closed') THEN 1 ELSE 0 END) AS closed_incidents,
     SUM(CASE WHEN severity_level = 'Critical' THEN 1 ELSE 0 END) AS critical_count,
-    SUM(CASE WHEN severity_level = 'High' THEN 1 ELSE 0 END) AS high_count
-FROM incident;
+    SUM(CASE WHEN severity_level = 'High' THEN 1 ELSE 0 END) AS high_count,
+    SUM(CASE WHEN category = 'IT' THEN 1 ELSE 0 END) AS it_count,
+    SUM(CASE WHEN category = 'Plumbing' THEN 1 ELSE 0 END) AS plumbing_count,
+    SUM(CASE WHEN category = 'Electrical' THEN 1 ELSE 0 END) AS electrical_count,
+    SUM(CASE WHEN category = 'HVAC' THEN 1 ELSE 0 END) AS hvac_count,
+    SUM(CASE WHEN category = 'General' THEN 1 ELSE 0 END) AS general_count
+FROM `incident`;
 
+-- View for students and staff (only their own incidents)
 DROP VIEW IF EXISTS `user_incidents_view`;
 CREATE VIEW `user_incidents_view` AS
 SELECT i.id, i.user_id, i.reported_at, i.severity_level, i.description, i.category, i.status,
-       b.id AS building_id, b.name AS building_name, il.floor_nr, il.room_nr
+       b.name AS building_name, b.id AS building_id, il.floor_nr, il.room_nr
 FROM incident i
-INNER JOIN incident_location il ON i.id = il.incident_id
-INNER JOIN building b ON il.building_id = b.id;
+LEFT JOIN incident_location il ON i.id = il.incident_id
+LEFT JOIN building b ON il.building_id = b.id;
 
+-- Technician tasks (only their assigned tasks)
 DROP VIEW IF EXISTS `technician_tasks_view`;
 CREATE VIEW `technician_tasks_view` AS
 SELECT mt.id, mt.incident_id, mt.type, mt.priority, mt.task_status, mt.estimated_duration,
        mt.start_time, mt.end_time, tw.tech_id,
-       i.description AS incident_description, i.category, i.severity_level, i.status AS incident_status
+       i.description AS incident_description, i.category AS incident_category, i.severity_level, i.status AS incident_status,
+       b.name AS building_name, il.floor_nr, il.room_nr,
+       u.name AS technician_name
 FROM maintenance_task mt
 INNER JOIN technician_work tw ON mt.id = tw.task_id
-INNER JOIN incident i ON mt.incident_id = i.id;
-
-DROP VIEW IF EXISTS `manager_task_view`;
-CREATE VIEW `manager_task_view` AS
-SELECT mt.id, mt.incident_id, mt.type, mt.priority, mt.task_status, mt.estimated_duration,
-       mt.start_time, mt.end_time,
-       i.description, i.category, i.severity_level, i.status AS incident_status,
-       b.id AS building_id, b.name AS building_name, il.floor_nr, il.room_nr,
-       u.name AS assigned_technician, u.email AS tech_email
-FROM maintenance_task mt
 INNER JOIN incident i ON mt.incident_id = i.id
-INNER JOIN incident_location il ON i.id = il.incident_id
-INNER JOIN building b ON il.building_id = b.id
-INNER JOIN technician_work tw ON mt.id = tw.task_id
-INNER JOIN user u ON tw.tech_id = u.id;
+LEFT JOIN incident_location il ON i.id = il.incident_id
+LEFT JOIN building b ON il.building_id = b.id
+LEFT JOIN user u ON tw.tech_id = u.id;
 
-DROP VIEW IF EXISTS `resource_equipment`;
-CREATE VIEW `resource_equipment` AS
-SELECT r.id, r.building_id, r.floor_nr, r.room_nr, r.type, r.availability_status, r.description,
-       b.name AS building_name
-FROM resource r
-INNER JOIN building b ON r.building_id = b.id;
+-- Manager view (all tasks with full info)
+DROP VIEW IF EXISTS `manager_tasks_view`;
+CREATE VIEW `manager_tasks_view` AS
+SELECT mt.id, mt.incident_id, mt.type, mt.priority, mt.task_status, mt.estimated_duration,
+       mt.start_time, mt.end_time, inc.category AS incident_category, inc.severity_level,
+       b.name AS building_name, il.floor_nr, il.room_nr,
+       GROUP_CONCAT(DISTINCT u.name SEPARATOR ', ') AS assigned_technicians,
+       GROUP_CONCAT(DISTINCT u.id SEPARATOR ', ') AS tech_ids
+FROM maintenance_task mt
+JOIN incident inc ON mt.incident_id = inc.id
+LEFT JOIN incident_location il ON inc.id = il.incident_id
+LEFT JOIN building b ON il.building_id = b.id
+LEFT JOIN technician_work tw ON mt.id = tw.task_id
+LEFT JOIN user u ON tw.tech_id = u.id
+GROUP BY mt.id;
 
-DROP VIEW IF EXISTS `user_role_summary`;
-CREATE VIEW `user_role_summary` AS
-SELECT u.id, u.name, u.email, r.name AS role_name, r.id AS role_id
-FROM user u
-INNER JOIN role r ON u.role_id = r.id;
+-- Roles and permissions 
+CREATE ROLE IF NOT EXISTS `pub_role`;
+CREATE ROLE IF NOT EXISTS `ss_role`;
+CREATE ROLE IF NOT EXISTS `tech_role`;
+CREATE ROLE IF NOT EXISTS `mgr_role`;
+CREATE ROLE IF NOT EXISTS `admn_role`;
 
--- Public privileges
+-- Public privileges 
+GRANT SELECT ON `public_view_stats` TO `pub_role`;
+GRANT INSERT ON `incident` TO `pub_role`;
+GRANT INSERT ON `incident_location` TO `pub_role`;
 
-GRANT SELECT ON `public_view_stats` TO `public`;
-GRANT INSERT ON `incident` TO `public`;
-GRANT INSERT ON `incident_location` TO `public`;
-GRANT SELECT ON `user_role_summary` TO `public`;
+-- Student/staff privileges
+GRANT SELECT ON `user_incidents_view` TO `ss_role`;
 
--- studentstaff privileges
+-- Technician privileges 
+GRANT SELECT ON `technician_tasks_view` TO `tech_role`;
+GRANT UPDATE ON `maintenance_task` TO `tech_role`;
 
-GRANT `public` TO `studentstaff`;
-GRANT SELECT ON `user_incidents_view` TO `studentstaff`;
-
--- technician privileges
-
-GRANT SELECT ON `technician_tasks_view` TO `technician`;
-GRANT UPDATE (`task_status`, `start_time`, `end_time`) ON `maintenance_task` TO `technician`;
-
--- manager privileges
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON `maintenance_task` TO `manager`;
-GRANT SELECT, INSERT, UPDATE, DELETE ON `incident` TO `manager`;
-GRANT SELECT, INSERT, UPDATE, DELETE ON `incident_location` TO `manager`;
-GRANT SELECT, INSERT, UPDATE, DELETE ON `resource` TO `manager`;
-GRANT SELECT, INSERT, UPDATE, DELETE ON `resource_usage` TO `manager`;
-GRANT SELECT, INSERT, UPDATE, DELETE ON `technician_work` TO `manager`;
-GRANT SELECT, INSERT, UPDATE, DELETE ON `availability` TO `manager`;
-GRANT SELECT, INSERT, UPDATE, DELETE ON `status_history` TO `manager`;
-GRANT SELECT, INSERT, UPDATE, DELETE ON `incident_history` TO `manager`;
-GRANT SELECT, INSERT, UPDATE, DELETE ON `skill_requirement` TO `manager`;
-GRANT SELECT, INSERT, UPDATE, DELETE ON `resource_requirement` TO `manager`;
-GRANT SELECT ON `manager_task_view` TO `manager`;
-GRANT SELECT ON `resource_equipment` TO `manager`;
-GRANT SELECT ON `skill` TO `manager`;
-GRANT SELECT, INSERT, UPDATE, DELETE ON `technician_skill` TO `manager`;
-GRANT SELECT ON `user_role_summary` TO `manager`;
+-- Manager privileges
+GRANT SELECT, INSERT, UPDATE, DELETE ON `maintenance_task` TO `mgr_role`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `incident` TO `mgr_role`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `incident_location` TO `mgr_role`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `resource` TO `mgr_role`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `resource_requirement` TO `mgr_role`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `technician_work` TO `mgr_role`;
+GRANT SELECT, INSERT, UPDATE, DELETE ON `availability` TO `mgr_role`;
+GRANT SELECT ON `manager_tasks_view` TO `mgr_role`; 
 
 -- Admin privileges
-
-GRANT ALL PRIVILEGES ON `idatg2204_prosjekt`.* TO `admin`;
-GRANT `admin` TO `manager` WITH ADMIN OPTION;
-GRANT `manager` TO `technician` WITH ADMIN OPTION;
-GRANT `technician` TO `studentstaff` WITH ADMIN OPTION;
-GRANT `studentstaff` TO `public` WITH ADMIN OPTION;
+GRANT ALL PRIVILEGES ON `idatg2204project`.* TO `admn_role`;
 
 
 COMMIT;
