@@ -617,6 +617,41 @@ CREATE TABLE `skill_requirement` (
   `skill_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+INSERT INTO `skill_requirement` (`task_id`, `skill_id`) VALUES
+(1, 5), (1, 6),
+(2, 6),
+(3, 1),
+(4, 6),
+(5, 2),
+(6, 5),
+(7, 3),
+(8, 4),
+(9, 2),
+(10, 1),
+(11, 5),
+(12, 3),
+(13, 6),
+(14, 1),
+(15, 1), (15, 6),
+(16, 2),
+(17, 4),
+(18, 3),
+(19, 2),
+(20, 1),
+(21, 5),
+(22, 5),
+(23, 6),
+(24, 3),
+(25, 1),
+(26, 1),
+(27, 2),
+(28, 5),
+(29, 1), (29, 6),
+(30, 3),
+(31, 2), (31, 6),
+(32, 5), (32, 6),
+(33, 4), (33, 6);
+
 -- --------------------------------------------------------
 
 --
@@ -774,13 +809,10 @@ INSERT INTO `technician_work` (`tech_id`, `task_id`) VALUES
 (20, 8),
 (20, 17),
 (21, 30),
-(21, 33),
-(21, 34),
 (22, 25),
 (22, 27),
 (22, 28),
 (22, 31),
-(22, 35),
 (29, 26),
 (29, 29),
 (29, 32);
@@ -1101,17 +1133,19 @@ FROM `incident`;
 DROP VIEW IF EXISTS `user_incidents_view`;
 CREATE VIEW `user_incidents_view` AS
 SELECT i.id, i.user_id, i.reported_at, i.severity_level, i.description, i.category, i.status,
-       b.name AS building_name, b.id AS building_id, il.floor_nr, il.room_nr
+       b.name AS building_name, b.id AS building_id, il.floor_nr, il.room_nr,
+       u.name AS reporter_name, u.email AS reporter_email
 FROM incident i
 LEFT JOIN incident_location il ON i.id = il.incident_id
-LEFT JOIN building b ON il.building_id = b.id;
+LEFT JOIN building b ON il.building_id = b.id
+LEFT JOIN user u ON i.user_id = u.id;
 
 -- Technician tasks (only their assigned tasks)
 DROP VIEW IF EXISTS `technician_tasks_view`;
 CREATE VIEW `technician_tasks_view` AS
 SELECT mt.id, mt.incident_id, mt.type, mt.priority, mt.task_status, mt.estimated_duration,
        mt.start_time, mt.end_time, tw.tech_id,
-       i.description AS incident_description, i.category AS incident_category, i.severity_level, i.status AS incident_status,
+       i.category AS incident_category, i.severity_level, i.status AS incident_status,
        b.name AS building_name, il.floor_nr, il.room_nr,
        u.name AS technician_name
 FROM maintenance_task mt

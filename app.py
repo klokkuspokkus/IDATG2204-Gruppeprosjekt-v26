@@ -1,8 +1,8 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session
 from functools import wraps
 import mysql.connector
 import os
-from datetime import datetime, date, timedelta
+from datetime import datetime, date
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-prod')
@@ -73,13 +73,6 @@ def get_current_user():
             "role_name": session['role_name']
         }
     return None
-
-def add_status_history(table_name, record_id, old_status, new_status, time_from, time_to=None):
-    if old_status == new_status:
-        return None, None
-    sql = "INSERT INTO status_history (task_id, time_started, time_ended, type) VALUES (%s, %s, %s, %s)"
-    execute_write(sql, (record_id, time_from, time_to or datetime.now(), new_status))
-    return True
 
 # ── Authentication ────────────────────────────────────────────────────────────
 
@@ -360,10 +353,11 @@ def create_incident():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     try:
+        reported_at = datetime.now()
         cursor.execute(
             "INSERT INTO incident (user_id, reported_at, severity_level, description, category, status) "
             "VALUES (%s, %s, %s, %s, %s, 'reported')",
-            (user_id, datetime.now(), severity_level, description, category)
+            (user_id, reported_at, severity_level, description, category)
         )
         incident_id = cursor.lastrowid
         
@@ -373,13 +367,6 @@ def create_incident():
                 "VALUES (%s, %s, %s, %s)",
                 (incident_id, building_id, floor_nr, room_nr)
             )
-        
-        time_now = datetime.now()
-        cursor.execute(
-            "INSERT INTO incident_history (time_from, time_to, incident_id, status_type) "
-            "VALUES (%s, %s, %s, 'reported')",
-            (time_now, time_now + timedelta(seconds=1), incident_id)
-        )
         
         conn.commit()
         return jsonify({"message": "Incident created", "id": incident_id}), 201
@@ -403,12 +390,13 @@ def update_incident(incident_id):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     try:
-        cursor.execute("SELECT status FROM incident WHERE id = %s", (incident_id,))
+        cursor.execute("SELECT status, reported_at FROM incident WHERE id = %s", (incident_id,))
         result = cursor.fetchone()
         if not result:
             return jsonify({"error": "Incident not found"}), 404
         
         old_status = result['status']
+        reported_at = result['reported_at']
         updates = []
         params = []
         
@@ -432,10 +420,17 @@ def update_incident(incident_id):
         cursor.execute(f"UPDATE incident SET {', '.join(updates)} WHERE id = %s", tuple(params))
         
         if status and status != old_status:
+            now = datetime.now()
+            cursor.execute(
+                "SELECT time_to FROM incident_history WHERE incident_id = %s ORDER BY time_from DESC LIMIT 1",
+                (incident_id,)
+            )
+            last = cursor.fetchone()
+            time_from = last['time_to'] if last else reported_at
             cursor.execute(
                 "INSERT INTO incident_history (time_from, time_to, incident_id, status_type) "
                 "VALUES (%s, %s, %s, %s)",
-                (datetime.now(), datetime.now() + timedelta(seconds=1), incident_id, status)
+                (time_from, now, incident_id, old_status)
             )
         
         conn.commit()
@@ -616,12 +611,6 @@ def create_task():
                 (resource_id, task_id)
             )
         
-        cursor.execute(
-            "INSERT INTO status_history (task_id, time_started, time_ended, type) "
-            "VALUES (%s, %s, %s, 'Not started')",
-            (task_id, datetime.now(), datetime.now() + timedelta(seconds=1))
-        )
-        
         conn.commit()
         return jsonify({"message": "Task created", "id": task_id}), 201
     except Exception as e:
@@ -678,10 +667,19 @@ def update_task(task_id):
         cursor.execute(f"UPDATE maintenance_task SET {', '.join(updates)} WHERE id = %s", tuple(params))
         
         if task_status and task_status != old_status:
+            now = datetime.now()
+            cursor.execute(
+                "SELECT time_ended FROM status_history WHERE task_id = %s ORDER BY time_started DESC LIMIT 1",
+                (task_id,)
+            )
+            last = cursor.fetchone()
+            time_from = last['time_ended'] if last else result['start_time']
+            if not time_from:
+                time_from = now
             cursor.execute(
                 "INSERT INTO status_history (task_id, time_started, time_ended, type) "
                 "VALUES (%s, %s, %s, %s)",
-                (task_id, datetime.now(), datetime.now() + timedelta(seconds=1), task_status)
+                (task_id, time_from, now, old_status)
             )
         
         conn.commit()
