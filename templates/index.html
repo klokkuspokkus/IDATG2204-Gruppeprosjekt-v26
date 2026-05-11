@@ -802,7 +802,7 @@ function showUserUI() {
   document.getElementById('user-name').textContent = currentUser.name || 'User';
   document.getElementById('user-role').textContent = currentUser.role_name || 'public';
   document.getElementById('user-email').textContent = currentUser.email || '';
-  const crudRoles = ['manager','administrator','technician'];
+  const crudRoles = ['manager','administrator'];
   const queryRoles = ['manager','administrator'];
   document.getElementById('nav-crud').style.display = crudRoles.includes(currentUser.role_name) ? '' : 'none';
   document.getElementById('nav-queries').style.display = queryRoles.includes(currentUser.role_name) ? '' : 'none';
@@ -948,7 +948,7 @@ async function loadTasks() {
     const res = await fetch('/api/tasks');
     const data = await res.json();
     if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
-    const canEdit = currentUser && ['technician','manager','administrator'].includes(currentUser.role_name);
+    const canEdit = currentUser && ['manager','administrator'].includes(currentUser.role_name);
     el.innerHTML = renderTable(data.tasks || [], ['id','incident_id','type','priority','task_status','estimated_duration','start_time','end_time','incident_category','severity_level','building_name','floor_nr','room_nr','technician_name','assigned_technicians'],
       canEdit ? (r) => '<button class="btn btn-ghost" style="padding:4px 10px;font-size:.78rem;" onclick="openEditTask(' + r.id + ')">Edit</button>' : null
     );

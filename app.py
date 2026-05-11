@@ -7,17 +7,48 @@ from datetime import datetime, date
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-prod')
 
-DB_CONFIG = {
+BASE_DB_CONFIG = {
     'host': os.environ.get('DB_HOST', 'host.docker.internal'),
     'port': int(os.environ.get('DB_PORT', 3306)),
-    'user': os.environ.get('DB_USER', 'root'),
-    'password': os.environ.get('DB_PASSWORD', ''),
     'database': os.environ.get('DB_NAME', 'idatg2204_prosjekt'),
     'charset': 'utf8mb4'
 }
 
+DB_CONFIGS = {
+    'default': {**BASE_DB_CONFIG,
+        'user': os.environ.get('DB_USER', 'root'),
+        'password': os.environ.get('DB_PASSWORD', '')
+    },
+    'public_user': {**BASE_DB_CONFIG,
+        'user': os.environ.get('PUB_DB_USER', 'pub_app'),
+        'password': os.environ.get('PUB_DB_PASSWORD', 'pub_pass')
+    },
+    'student': {**BASE_DB_CONFIG,
+        'user': os.environ.get('SS_DB_USER', 'ss_app'),
+        'password': os.environ.get('SS_DB_PASSWORD', 'ss_pass')
+    },
+    'staff': {**BASE_DB_CONFIG,
+        'user': os.environ.get('SS_DB_USER', 'ss_app'),
+        'password': os.environ.get('SS_DB_PASSWORD', 'ss_pass')
+    },
+    'technician': {**BASE_DB_CONFIG,
+        'user': os.environ.get('TECH_DB_USER', 'tech_app'),
+        'password': os.environ.get('TECH_DB_PASSWORD', 'tech_pass')
+    },
+    'manager': {**BASE_DB_CONFIG,
+        'user': os.environ.get('MGR_DB_USER', 'mgr_app'),
+        'password': os.environ.get('MGR_DB_PASSWORD', 'mgr_pass')
+    },
+    'administrator': {**BASE_DB_CONFIG,
+        'user': os.environ.get('ADMN_DB_USER', 'admn_app'),
+        'password': os.environ.get('ADMN_DB_PASSWORD', 'admn_pass')
+    }
+}
+
 def get_db():
-    return mysql.connector.connect(**DB_CONFIG)
+    role = session.get('role_name', 'default')
+    config = DB_CONFIGS.get(role, DB_CONFIGS['default'])
+    return mysql.connector.connect(**config)
 
 def execute_query(sql, params=None, fetch=True):
     conn = get_db()
@@ -622,6 +653,7 @@ def create_task():
 
 @app.route('/api/tasks/<int:task_id>', methods=['PUT'])
 @login_required
+@role_required(['manager', 'administrator'])
 def update_task(task_id):
     data = request.json or {}
     role = session.get('role_name')
