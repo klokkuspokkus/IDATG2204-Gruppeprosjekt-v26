@@ -442,6 +442,26 @@ def update_incident(incident_id):
         cursor.close()
         conn.close()
 
+@app.route('/api/incidents/<int:incident_id>', methods=['DELETE'])
+@login_required
+@role_required(['manager', 'administrator'])
+def delete_incident(incident_id):
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("DELETE FROM incident_history WHERE incident_id = %s", (incident_id,))
+        cursor.execute("DELETE FROM incident_location WHERE incident_id = %s", (incident_id,))
+        cursor.execute("UPDATE maintenance_task SET incident_id = NULL WHERE incident_id = %s", (incident_id,))
+        cursor.execute("DELETE FROM incident WHERE id = %s", (incident_id,))
+        conn.commit()
+        return jsonify({"message": "Incident deleted"})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 @app.route('/api/incidents/<int:incident_id>/location', methods=['PUT'])
 @login_required
 @role_required(['manager', 'administrator'])
@@ -694,7 +714,7 @@ def update_task(task_id):
 
 @app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
 @login_required
-@role_required(['manager', 'administrator'])
+@role_required(['administrator'])
 def delete_task(task_id):
     result, error = execute_write("DELETE FROM maintenance_task WHERE id = %s", (task_id,))
     if error:
@@ -1000,6 +1020,15 @@ def list_buildings():
     if error:
         return jsonify({"error": error}), 500
     return jsonify({"buildings": results})
+
+@app.route('/api/buildings/<int:building_id>', methods=['DELETE'])
+@login_required
+@role_required(['manager', 'administrator'])
+def delete_building(building_id):
+    result, error = execute_write("DELETE FROM building WHERE id = %s", (building_id,))
+    if error:
+        return jsonify({"error": error}), 500
+    return jsonify({"message": "Building deleted"})
 
 @app.route('/api/buildings', methods=['POST'])
 def create_building():

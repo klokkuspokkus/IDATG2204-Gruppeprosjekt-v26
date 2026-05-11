@@ -896,7 +896,7 @@ async function loadIncidents() {
     if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
     const canEdit = currentUser && ['manager','administrator'].includes(currentUser.role_name);
     el.innerHTML = renderTable(data.incidents || [], ['id','reported_at','category','severity_level','status','description','building_name','floor_nr','room_nr'],
-      canEdit ? (r) => '<button class="btn btn-ghost" style="padding:4px 10px;font-size:.78rem;" onclick="openEditIncident(' + r.id + ')">Edit</button>' : null
+      canEdit ? (r) => '<button class="btn btn-ghost" style="padding:4px 10px;font-size:.78rem;" onclick="openEditIncident(' + r.id + ')">Edit</button><button class="btn btn-ghost" style="padding:4px 8px;font-size:.78rem;margin-left:4px;color:var(--red);" onclick="deleteIncident(' + r.id + ')">Del</button>' : null
     );
   } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
 }
@@ -949,8 +949,13 @@ async function loadTasks() {
     const data = await res.json();
     if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
     const canEdit = currentUser && ['manager','administrator'].includes(currentUser.role_name);
+    const canDel = currentUser && ['administrator'].includes(currentUser.role_name);
     el.innerHTML = renderTable(data.tasks || [], ['id','incident_id','type','priority','task_status','estimated_duration','start_time','end_time','incident_category','severity_level','building_name','floor_nr','room_nr','technician_name','assigned_technicians'],
-      canEdit ? (r) => '<button class="btn btn-ghost" style="padding:4px 10px;font-size:.78rem;" onclick="openEditTask(' + r.id + ')">Edit</button>' : null
+      canEdit ? (r) => {
+        let btns = '<button class="btn btn-ghost" style="padding:4px 10px;font-size:.78rem;" onclick="openEditTask(' + r.id + ')">Edit</button>';
+        if (canDel) btns += '<button class="btn btn-ghost" style="padding:4px 8px;font-size:.78rem;margin-left:4px;color:var(--red);" onclick="deleteTask(' + r.id + ')">Del</button>';
+        return btns;
+      } : null
     );
   } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
 }
@@ -1002,7 +1007,10 @@ async function loadResources() {
     const res = await fetch('/api/resources');
     const data = await res.json();
     if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
-    el.innerHTML = renderTable(data.resources || data, ['id','type','building_name','floor_nr','room_nr','availability_status','description']);
+    const canDelRes = currentUser && ['manager','administrator'].includes(currentUser.role_name);
+    el.innerHTML = renderTable(data.resources || data, ['id','type','building_name','floor_nr','room_nr','availability_status','description'],
+      canDelRes ? (r) => '<button class="btn btn-ghost" style="padding:4px 8px;font-size:.78rem;color:var(--red);" onclick="deleteResource(' + r.id + ')">Del</button>' : null
+    );
   } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
 }
 
@@ -1039,7 +1047,10 @@ async function loadUsers() {
     const res = await fetch('/api/users');
     const data = await res.json();
     if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
-    el.innerHTML = renderTable(data.users || data, ['id','name','email','role_name']);
+    const canDelUsr = currentUser && ['administrator'].includes(currentUser.role_name);
+    el.innerHTML = renderTable(data.users || data, ['id','name','email','role_name'],
+      canDelUsr ? (r) => '<button class="btn btn-ghost" style="padding:4px 8px;font-size:.78rem;color:var(--red);" onclick="deleteUser(' + r.id + ')">Del</button>' : null
+    );
   } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
 }
 
@@ -1072,7 +1083,10 @@ async function loadSkills() {
     const res = await fetch('/api/skills');
     const data = await res.json();
     if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
-    el.innerHTML = renderTable(data.skills || data, ['id','name']);
+    const canDelSkill = currentUser && ['manager','administrator'].includes(currentUser.role_name);
+    el.innerHTML = renderTable(data.skills || data, ['id','name'],
+      canDelSkill ? (r) => '<button class="btn btn-ghost" style="padding:4px 8px;font-size:.78rem;color:var(--red);" onclick="deleteSkill(' + r.id + ')">Del</button>' : null
+    );
   } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
 }
 
@@ -1148,7 +1162,10 @@ async function loadBuildings() {
     const res = await fetch('/api/buildings');
     const data = await res.json();
     if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
-    el.innerHTML = renderTable(data.buildings || data, ['id','name','address']);
+    const canDelBld = currentUser && ['manager','administrator'].includes(currentUser.role_name);
+    el.innerHTML = renderTable(data.buildings || data, ['id','name','address'],
+      canDelBld ? (r) => '<button class="btn btn-ghost" style="padding:4px 8px;font-size:.78rem;color:var(--red);" onclick="deleteBuilding(' + r.id + ')">Del</button>' : null
+    );
   } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
 }
 
@@ -1452,6 +1469,66 @@ async function saveEditTask() {
     closeModal('modal-edit-task');
     loadTasks();
   } catch(e) { showError('edit-task-error', 'Failed to update'); }
+}
+
+async function deleteIncident(id) {
+  if (!confirm('Delete incident #' + id + '? This will unlink its tasks.')) return;
+  try {
+    const res = await fetch('/api/incidents/' + id, { method:'DELETE' });
+    const data = await res.json();
+    if (data.error) { alert('Error: ' + data.error); return; }
+    loadIncidents(); loadStats();
+  } catch(e) { alert('Delete failed'); }
+}
+
+async function deleteTask(id) {
+  if (!confirm('Delete task #' + id + '?')) return;
+  try {
+    const res = await fetch('/api/tasks/' + id, { method:'DELETE' });
+    const data = await res.json();
+    if (data.error) { alert('Error: ' + data.error); return; }
+    loadTasks();
+  } catch(e) { alert('Delete failed'); }
+}
+
+async function deleteResource(id) {
+  if (!confirm('Delete resource #' + id + '?')) return;
+  try {
+    const res = await fetch('/api/resources/' + id, { method:'DELETE' });
+    const data = await res.json();
+    if (data.error) { alert('Error: ' + data.error); return; }
+    loadResources();
+  } catch(e) { alert('Delete failed'); }
+}
+
+async function deleteSkill(id) {
+  if (!confirm('Delete skill #' + id + '?')) return;
+  try {
+    const res = await fetch('/api/skills/' + id, { method:'DELETE' });
+    const data = await res.json();
+    if (data.error) { alert('Error: ' + data.error); return; }
+    loadSkills();
+  } catch(e) { alert('Delete failed'); }
+}
+
+async function deleteBuilding(id) {
+  if (!confirm('Delete building #' + id + '?')) return;
+  try {
+    const res = await fetch('/api/buildings/' + id, { method:'DELETE' });
+    const data = await res.json();
+    if (data.error) { alert('Error: ' + data.error); return; }
+    loadBuildings();
+  } catch(e) { alert('Delete failed'); }
+}
+
+async function deleteUser(id) {
+  if (!confirm('Delete user #' + id + '?')) return;
+  try {
+    const res = await fetch('/api/users/' + id, { method:'DELETE' });
+    const data = await res.json();
+    if (data.error) { alert('Error: ' + data.error); return; }
+    loadUsers();
+  } catch(e) { alert('Delete failed'); }
 }
 
 checkAuth();
