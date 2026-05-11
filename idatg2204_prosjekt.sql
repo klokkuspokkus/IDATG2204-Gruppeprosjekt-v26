@@ -34,44 +34,44 @@ CREATE TABLE `availability` (
   `day` varchar(9) NOT NULL CHECK (`day` in ('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday')),
   `start_time` time NOT NULL,
   `end_time` time NOT NULL,
-  `tech_id` int(11) NOT NULL
+  `tech_email` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dataark for tabell `availability`
 --
 
-INSERT INTO `availability` (`day`, `start_time`, `end_time`, `tech_id`) VALUES
-('Friday', '07:00:00', '15:00:00', 5),
-('Friday', '08:00:00', '16:00:00', 3),
-('Friday', '09:00:00', '17:00:00', 4),
-('Friday', '09:00:00', '17:00:00', 21),
-('Friday', '10:00:00', '18:00:00', 22),
-('Friday', '12:00:00', '20:00:00', 29),
-('Monday', '07:00:00', '15:00:00', 5),
-('Monday', '08:00:00', '16:00:00', 3),
-('Monday', '09:00:00', '17:00:00', 4),
-('Monday', '09:00:00', '17:00:00', 21),
-('Monday', '10:00:00', '18:00:00', 22),
-('Monday', '12:00:00', '20:00:00', 29),
-('Thursday', '07:00:00', '15:00:00', 5),
-('Thursday', '08:00:00', '16:00:00', 3),
-('Thursday', '09:00:00', '17:00:00', 4),
-('Thursday', '09:00:00', '17:00:00', 21),
-('Thursday', '10:00:00', '18:00:00', 22),
-('Thursday', '12:00:00', '20:00:00', 29),
-('Tuesday', '07:00:00', '15:00:00', 5),
-('Tuesday', '08:00:00', '16:00:00', 3),
-('Tuesday', '09:00:00', '17:00:00', 4),
-('Tuesday', '09:00:00', '17:00:00', 21),
-('Tuesday', '10:00:00', '18:00:00', 22),
-('Tuesday', '12:00:00', '20:00:00', 29),
-('Wednesday', '07:00:00', '15:00:00', 5),
-('Wednesday', '08:00:00', '16:00:00', 3),
-('Wednesday', '09:00:00', '17:00:00', 4),
-('Wednesday', '09:00:00', '17:00:00', 21),
-('Wednesday', '10:00:00', '18:00:00', 22),
-('Wednesday', '12:00:00', '20:00:00', 29);
+INSERT INTO `availability` (`day`, `start_time`, `end_time`, `tech_email`) VALUES
+('Friday', '07:00:00', '15:00:00', 'elin@ntnu.no'),
+('Friday', '08:00:00', '16:00:00', 'steinar@ntnu.no'),
+('Friday', '09:00:00', '17:00:00', 'rolf@ntnu.no'),
+('Friday', '09:00:00', '17:00:00', 'dag.data@ntnu.no'),
+('Friday', '10:00:00', '18:00:00', 'siv@ntnu.no'),
+('Friday', '12:00:00', '20:00:00', 'vetle@stud.ntnu.no'),
+('Monday', '07:00:00', '15:00:00', 'elin@ntnu.no'),
+('Monday', '08:00:00', '16:00:00', 'steinar@ntnu.no'),
+('Monday', '09:00:00', '17:00:00', 'rolf@ntnu.no'),
+('Monday', '09:00:00', '17:00:00', 'dag.data@ntnu.no'),
+('Monday', '10:00:00', '18:00:00', 'siv@ntnu.no'),
+('Monday', '12:00:00', '20:00:00', 'vetle@stud.ntnu.no'),
+('Thursday', '07:00:00', '15:00:00', 'elin@ntnu.no'),
+('Thursday', '08:00:00', '16:00:00', 'steinar@ntnu.no'),
+('Thursday', '09:00:00', '17:00:00', 'rolf@ntnu.no'),
+('Thursday', '09:00:00', '17:00:00', 'dag.data@ntnu.no'),
+('Thursday', '10:00:00', '18:00:00', 'siv@ntnu.no'),
+('Thursday', '12:00:00', '20:00:00', 'vetle@stud.ntnu.no'),
+('Tuesday', '07:00:00', '15:00:00', 'elin@ntnu.no'),
+('Tuesday', '08:00:00', '16:00:00', 'steinar@ntnu.no'),
+('Tuesday', '09:00:00', '17:00:00', 'rolf@ntnu.no'),
+('Tuesday', '09:00:00', '17:00:00', 'dag.data@ntnu.no'),
+('Tuesday', '10:00:00', '18:00:00', 'siv@ntnu.no'),
+('Tuesday', '12:00:00', '20:00:00', 'vetle@stud.ntnu.no'),
+('Wednesday', '07:00:00', '15:00:00', 'elin@ntnu.no'),
+('Wednesday', '08:00:00', '16:00:00', 'steinar@ntnu.no'),
+('Wednesday', '09:00:00', '17:00:00', 'rolf@ntnu.no'),
+('Wednesday', '09:00:00', '17:00:00', 'dag.data@ntnu.no'),
+('Wednesday', '10:00:00', '18:00:00', 'siv@ntnu.no'),
+('Wednesday', '12:00:00', '20:00:00', 'vetle@stud.ntnu.no');
 
 -- --------------------------------------------------------
 
@@ -153,7 +153,7 @@ INSERT INTO `floor` (`floor_nr`, `building_id`) VALUES
 
 CREATE TABLE `incident` (
   `id` int(11) NOT NULL,
-  `user_id` int(11) DEFAULT NULL,
+  `user_email` varchar(100) DEFAULT NULL,
   `reported_at` datetime NOT NULL,
   `severity_level` varchar(20) DEFAULT NULL CHECK (`severity_level` in ('Low','Medium','High','Critical')),
   `description` varchar(255) DEFAULT NULL,
@@ -165,37 +165,37 @@ CREATE TABLE `incident` (
 -- Dataark for tabell `incident`
 --
 
-INSERT INTO `incident` (`id`, `user_id`, `reported_at`, `severity_level`, `description`, `category`, `status`) VALUES
-(1, 10, '2026-04-01 09:30:00', 'High', 'Projector in lecture hall only plays cat videos', 'IT', 'closed'),
-(2, 11, '2026-04-02 14:15:00', 'High', 'Coffee machine spews brown sludge – caffeine crisis', 'General', 'resolved'),
-(3, 12, '2026-04-03 11:00:00', 'Medium', 'Toilet on 3rd floor makes airplane landing noise', 'Plumbing', 'assigned'),
-(4, 13, '2026-04-04 08:20:00', 'Low', 'Door handle greasy – feels like someone ate chips', 'General', 'closed'),
-(5, 14, '2026-04-05 16:45:00', 'High', 'Elevator stuck between floors – plays \"Never Gonna Give You Up\"', 'Electrical', 'resolved'),
-(6, 15, '2026-04-06 10:10:00', 'High', 'Exam system offline – 300 students panicking', 'IT', 'closed'),
-(7, 8, '2026-04-07 13:30:00', 'Medium', 'AC blowing hot air – room smells of despair', 'HVAC', 'verified'),
-(8, 16, '2026-04-08 12:00:00', 'Low', 'Loose floor tile sings when stepped on', 'Carpentry', 'reported'),
-(9, 17, '2026-04-09 09:00:00', 'High', 'Fire alarm triggered by burnt popcorn (again)', 'Electrical', 'assigned'),
-(10, 18, '2026-04-10 11:20:00', 'Medium', 'Sink clogged with instant noodles and regret', 'Plumbing', 'closed'),
-(11, 19, '2026-04-11 07:30:00', 'High', 'Wi-Fi named \"NTNU-gjest\" but requires password nobody knows', 'IT', 'assigned'),
-(12, 20, '2026-04-12 15:10:00', 'Medium', 'Heater rattles like skeleton doing laundry', 'HVAC', 'resolved'),
-(13, 21, '2026-04-13 10:45:00', 'Low', 'Sticky lock on group room – requires blood sacrifice', 'General', 'reported'),
-(14, 22, '2026-04-14 13:00:00', 'High', 'Ceiling leak creating indoor waterfall – students kayaking', 'Plumbing', 'verified'),
-(15, 9, '2026-04-15 08:40:00', 'High', 'Power outage in lab – backup generator just laughs', 'Electrical', 'assigned'),
-(16, 23, '2026-04-16 16:30:00', 'Medium', 'Office chair spontaneously reclines into nap mode', 'Carpentry', 'closed'),
-(17, 24, '2026-04-17 09:15:00', 'High', 'Ventilation fan sounds like angry badger', 'HVAC', 'resolved'),
-(18, 25, '2026-04-18 14:00:00', 'Low', 'Light bulb flickers in rhythm to \"Baby Shark\"', 'Electrical', 'closed'),
-(19, 26, '2026-04-19 12:30:00', 'Medium', 'Toilet runs continuously – training for marathon', 'Plumbing', 'resolved'),
-(20, 27, '2026-04-20 10:00:00', 'High', 'Server overheating – smells like burnt toast and failed exams', 'IT', 'closed'),
-(21, 28, '2026-04-21 08:00:00', 'Low', 'Paper towel dispenser dispenses motivational quotes only', 'General', 'reported'),
-(22, 29, '2026-04-22 09:30:00', 'Medium', 'AC set to \"Sahara noon\" – waffles drying out', 'HVAC', 'assigned'),
-(23, 30, '2026-04-23 14:15:00', 'High', 'Carpet wet from leak – now growing something sentient', 'Plumbing', 'verified'),
-(24, 10, '2026-04-24 22:45:00', 'High', 'Lights flicker to form shadow puppets after dark', 'Electrical', 'reported'),
-(25, 11, '2026-04-25 07:10:00', 'High', 'Printer prints only \"PC LOAD LETTER\" – no one knows what it means', 'IT', 'assigned'),
-(26, 12, '2026-04-26 13:00:00', 'High', 'Garbage disposal ate a fork and is now demanding dessert', 'Plumbing', 'verified'),
-(27, 13, '2026-04-27 11:30:00', 'Medium', 'Vents whistle \"Pop Goes the Weasel\" at 3 AM', 'HVAC', 'assigned'),
-(28, 14, '2026-04-28 06:00:00', 'High', 'Control panel jammed with donut – now only plays elevator music', 'Electrical', 'assigned'),
-(29, 15, '2026-04-29 16:20:00', 'Medium', 'Lightning struck building – now all clocks run backward', 'IT', 'resolved'),
-(30, 16, '2026-04-30 12:00:00', 'Low', 'Anvil-shaped hole in roof – definitely not a cartoon', 'Carpentry', 'reported');
+INSERT INTO `incident` (`id`, `user_email`, `reported_at`, `severity_level`, `description`, `category`, `status`) VALUES
+(1, 'nicolai@stud.ntnu.no', '2026-04-01 09:30:00', 'High', 'Projector in lecture hall only plays cat videos', 'IT', 'closed'),
+(2, 'martine@stud.ntnu.no', '2026-04-02 14:15:00', 'High', 'Coffee machine spews brown sludge – caffeine crisis', 'General', 'resolved'),
+(3, 'ola.oops@stud.ntnu.no', '2026-04-03 11:00:00', 'Medium', 'Toilet on 3rd floor makes airplane landing noise', 'Plumbing', 'assigned'),
+(4, 'kari.krasj@stud.ntnu.no', '2026-04-04 08:20:00', 'Low', 'Door handle greasy – feels like someone ate chips', 'General', 'closed'),
+(5, 'plott@math.ntnu.no', '2026-04-05 16:45:00', 'High', 'Elevator stuck between floors – plays \"Never Gonna Give You Up\"', 'Electrical', 'resolved'),
+(6, 'lars@stud.ntnu.no', '2026-04-06 10:10:00', 'High', 'Exam system offline – 300 students panicking', 'IT', 'closed'),
+(7, 'finn.forsker@ntnu.no', '2026-04-07 13:30:00', 'Medium', 'AC blowing hot air – room smells of despair', 'HVAC', 'verified'),
+(8, 'mona.mote@ntnu.no', '2026-04-08 12:00:00', 'Low', 'Loose floor tile sings when stepped on', 'Carpentry', 'reported'),
+(9, 'henrik@stud.ntnu.no', '2026-04-09 09:00:00', 'High', 'Fire alarm triggered by burnt popcorn (again)', 'Electrical', 'assigned'),
+(10, 'berit.bø@ntnu.no', '2026-04-10 11:20:00', 'Medium', 'Sink clogged with instant noodles and regret', 'Plumbing', 'closed'),
+(11, 'lars.lift@ntnu.no', '2026-04-11 07:30:00', 'High', 'Wi-Fi named \"NTNU-gjest\" but requires password nobody knows', 'IT', 'assigned'),
+(12, 'vera.vvs@ntnu.no', '2026-04-12 15:10:00', 'Medium', 'Heater rattles like skeleton doing laundry', 'HVAC', 'resolved'),
+(13, 'dag.data@ntnu.no', '2026-04-13 10:45:00', 'Low', 'Sticky lock on group room – requires blood sacrifice', 'General', 'reported'),
+(14, 'siv@ntnu.no', '2026-04-14 13:00:00', 'High', 'Ceiling leak creating indoor waterfall – students kayaking', 'Plumbing', 'verified'),
+(15, 'siri.sokk@ntnu.no', '2026-04-15 08:40:00', 'High', 'Power outage in lab – backup generator just laughs', 'Electrical', 'assigned'),
+(16, 'pedro@ntnu.no', '2026-04-16 16:30:00', 'Medium', 'Office chair spontaneously reclines into nap mode', 'Carpentry', 'closed'),
+(17, 'tiril@stud.ntnu.no', '2026-04-17 09:15:00', 'High', 'Ventilation fan sounds like angry badger', 'HVAC', 'resolved'),
+(18, 'erik@stud.ntnu.no', '2026-04-18 14:00:00', 'Low', 'Light bulb flickers in rhythm to \"Baby Shark\"', 'Electrical', 'closed'),
+(19, 'guro@stud.ntnu.no', '2026-04-19 12:30:00', 'Medium', 'Toilet runs continuously – training for marathon', 'Plumbing', 'resolved'),
+(20, 'simen@stud.ntnu.no', '2026-04-20 10:00:00', 'High', 'Server overheating – smells like burnt toast and failed exams', 'IT', 'closed'),
+(21, 'anja@stud.ntnu.no', '2026-04-21 08:00:00', 'Low', 'Paper towel dispenser dispenses motivational quotes only', 'General', 'reported'),
+(22, 'vetle@stud.ntnu.no', '2026-04-22 09:30:00', 'Medium', 'AC set to \"Sahara noon\" – waffles drying out', 'HVAC', 'assigned'),
+(23, 'ida@stud.ntnu.no', '2026-04-23 14:15:00', 'High', 'Carpet wet from leak – now growing something sentient', 'Plumbing', 'verified'),
+(24, 'nicolai@stud.ntnu.no', '2026-04-24 22:45:00', 'High', 'Lights flicker to form shadow puppets after dark', 'Electrical', 'reported'),
+(25, 'martine@stud.ntnu.no', '2026-04-25 07:10:00', 'High', 'Printer prints only \"PC LOAD LETTER\" – no one knows what it means', 'IT', 'assigned'),
+(26, 'ola.oops@stud.ntnu.no', '2026-04-26 13:00:00', 'High', 'Garbage disposal ate a fork and is now demanding dessert', 'Plumbing', 'verified'),
+(27, 'kari.krasj@stud.ntnu.no', '2026-04-27 11:30:00', 'Medium', 'Vents whistle \"Pop Goes the Weasel\" at 3 AM', 'HVAC', 'assigned'),
+(28, 'plott@math.ntnu.no', '2026-04-28 06:00:00', 'High', 'Control panel jammed with donut – now only plays elevator music', 'Electrical', 'assigned'),
+(29, 'lars@stud.ntnu.no', '2026-04-29 16:20:00', 'Medium', 'Lightning struck building – now all clocks run backward', 'IT', 'resolved'),
+(30, 'mona.mote@ntnu.no', '2026-04-30 12:00:00', 'Low', 'Anvil-shaped hole in roof – definitely not a cartoon', 'Carpentry', 'reported');
 
 -- --------------------------------------------------------
 
@@ -706,27 +706,28 @@ INSERT INTO `status_history` (`task_id`, `time_started`, `time_ended`, `type`) V
 --
 
 CREATE TABLE `technician` (
-  `tech_id` int(11) NOT NULL,
+  `tech_email` varchar(100) NOT NULL,
   `role` varchar(50) NOT NULL,
-  `employement_status` varchar(30) NOT NULL
+  `employement_status` varchar(30) NOT NULL,
+  PRIMARY KEY (`tech_email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dataark for tabell `technician`
 --
 
-INSERT INTO `technician` (`tech_id`, `role`, `employement_status`) VALUES
-(3, 'IT Support', 'Full-time'),
-(4, 'Plumber', 'Full-time'),
-(5, 'Electrician', 'Full-time'),
-(6, 'General Maintenance', 'Part-time'),
-(7, 'Coffee Machine Therapist', 'Contractor'),
-(8, 'Elevator Whisperer', 'Full-time'),
-(19, 'Chief of Chaos', 'Full-time'),
-(20, 'Heavy Door Opener', 'Full-time'),
-(21, 'Cable Manager', 'Full-time'),
-(22, 'Lost Property Finder', 'Part-time'),
-(29, 'Mold Inspector', 'Part-time');
+INSERT INTO `technician` (`tech_email`, `role`, `employement_status`) VALUES
+('steinar@ntnu.no', 'IT Support', 'Full-time'),
+('rolf@ntnu.no', 'Plumber', 'Full-time'),
+('elin@ntnu.no', 'Electrician', 'Full-time'),
+('vidar@ntnu.no', 'General Maintenance', 'Part-time'),
+('kjell@ntnu.no', 'Coffee Machine Therapist', 'Contractor'),
+('finn.forsker@ntnu.no', 'Elevator Whisperer', 'Full-time'),
+('lars.lift@ntnu.no', 'Chief of Chaos', 'Full-time'),
+('vera.vvs@ntnu.no', 'Heavy Door Opener', 'Full-time'),
+('dag.data@ntnu.no', 'Cable Manager', 'Full-time'),
+('siv@ntnu.no', 'Lost Property Finder', 'Part-time'),
+('vetle@stud.ntnu.no', 'Mold Inspector', 'Part-time');
 
 -- --------------------------------------------------------
 
@@ -735,7 +736,7 @@ INSERT INTO `technician` (`tech_id`, `role`, `employement_status`) VALUES
 --
 
 CREATE TABLE `technician_skill` (
-  `tech_id` int(11) NOT NULL,
+  `tech_email` varchar(100) NOT NULL,
   `skill_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -743,25 +744,25 @@ CREATE TABLE `technician_skill` (
 -- Dataark for tabell `technician_skill`
 --
 
-INSERT INTO `technician_skill` (`tech_id`, `skill_id`) VALUES
-(3, 5),
-(3, 6),
-(4, 1),
-(4, 6),
-(5, 2),
-(5, 6),
-(6, 4),
-(6, 6),
-(7, 3),
-(8, 2),
-(19, 1),
-(19, 2),
-(20, 4),
-(20, 6),
-(21, 5),
-(21, 6),
-(22, 6),
-(29, 3);
+INSERT INTO `technician_skill` (`tech_email`, `skill_id`) VALUES
+('steinar@ntnu.no', 5),
+('steinar@ntnu.no', 6),
+('rolf@ntnu.no', 1),
+('rolf@ntnu.no', 6),
+('elin@ntnu.no', 2),
+('elin@ntnu.no', 6),
+('vidar@ntnu.no', 4),
+('vidar@ntnu.no', 6),
+('kjell@ntnu.no', 3),
+('finn.forsker@ntnu.no', 2),
+('lars.lift@ntnu.no', 1),
+('lars.lift@ntnu.no', 2),
+('vera.vvs@ntnu.no', 4),
+('vera.vvs@ntnu.no', 6),
+('dag.data@ntnu.no', 5),
+('dag.data@ntnu.no', 6),
+('siv@ntnu.no', 6),
+('vetle@stud.ntnu.no', 3);
 
 -- --------------------------------------------------------
 
@@ -770,7 +771,7 @@ INSERT INTO `technician_skill` (`tech_id`, `skill_id`) VALUES
 --
 
 CREATE TABLE `technician_work` (
-  `tech_id` int(11) NOT NULL,
+  `tech_email` varchar(100) NOT NULL,
   `task_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -778,44 +779,44 @@ CREATE TABLE `technician_work` (
 -- Dataark for tabell `technician_work`
 --
 
-INSERT INTO `technician_work` (`tech_id`, `task_id`) VALUES
-(3, 1),
-(3, 12),
-(3, 19),
-(3, 22),
-(4, 2),
-(4, 7),
-(4, 18),
-(4, 21),
-(5, 4),
-(5, 14),
-(5, 17),
-(5, 20),
-(6, 5),
-(6, 6),
-(6, 19),
-(7, 9),
-(7, 10),
-(7, 15),
-(7, 16),
-(8, 11),
-(8, 13),
-(8, 23),
-(8, 24),
-(19, 4),
-(19, 14),
-(19, 20),
-(20, 3),
-(20, 8),
-(20, 17),
-(21, 30),
-(22, 25),
-(22, 27),
-(22, 28),
-(22, 31),
-(29, 26),
-(29, 29),
-(29, 32);
+INSERT INTO `technician_work` (`tech_email`, `task_id`) VALUES
+('steinar@ntnu.no', 1),
+('steinar@ntnu.no', 12),
+('steinar@ntnu.no', 19),
+('steinar@ntnu.no', 22),
+('rolf@ntnu.no', 2),
+('rolf@ntnu.no', 7),
+('rolf@ntnu.no', 18),
+('rolf@ntnu.no', 21),
+('elin@ntnu.no', 4),
+('elin@ntnu.no', 14),
+('elin@ntnu.no', 17),
+('elin@ntnu.no', 20),
+('vidar@ntnu.no', 5),
+('vidar@ntnu.no', 6),
+('vidar@ntnu.no', 19),
+('kjell@ntnu.no', 9),
+('kjell@ntnu.no', 10),
+('kjell@ntnu.no', 15),
+('kjell@ntnu.no', 16),
+('finn.forsker@ntnu.no', 11),
+('finn.forsker@ntnu.no', 13),
+('finn.forsker@ntnu.no', 23),
+('finn.forsker@ntnu.no', 24),
+('lars.lift@ntnu.no', 4),
+('lars.lift@ntnu.no', 14),
+('lars.lift@ntnu.no', 20),
+('vera.vvs@ntnu.no', 3),
+('vera.vvs@ntnu.no', 8),
+('vera.vvs@ntnu.no', 17),
+('dag.data@ntnu.no', 30),
+('siv@ntnu.no', 25),
+('siv@ntnu.no', 27),
+('siv@ntnu.no', 28),
+('siv@ntnu.no', 31),
+('vetle@stud.ntnu.no', 26),
+('vetle@stud.ntnu.no', 29),
+('vetle@stud.ntnu.no', 32);
 
 -- --------------------------------------------------------
 
@@ -824,47 +825,47 @@ INSERT INTO `technician_work` (`tech_id`, `task_id`) VALUES
 --
 
 CREATE TABLE `user` (
-  `id` int(11) NOT NULL,
+  `email` varchar(100) NOT NULL,
   `role_id` int(11) NOT NULL,
   `name` varchar(100) NOT NULL,
-  `email` varchar(100) NOT NULL
+  PRIMARY KEY (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dataark for tabell `user`
 --
 
-INSERT INTO `user` (`id`, `role_id`, `name`, `email`) VALUES
-(1, 1, 'Rektor Strålande', 'rektor@ntnu.no'),
-(2, 2, 'Britt Breiflabb', 'britt.breiflabb@ntnu.no'),
-(3, 3, 'IT-Steinar', 'steinar@ntnu.no'),
-(4, 3, 'Rørlegger Rolf', 'rolf@ntnu.no'),
-(5, 3, 'Elektriker Elin', 'elin@ntnu.no'),
-(6, 3, 'Vaktmester Vidar', 'vidar@ntnu.no'),
-(7, 3, 'Kaffemaskin Kjell', 'kjell@ntnu.no'),
-(8, 4, 'Foreleser Finn', 'finn.forsker@ntnu.no'),
-(9, 4, 'Siri Sokk', 'siri.sokk@ntnu.no'),
-(10, 5, 'Nicolai Nerd', 'nicolai@stud.ntnu.no'),
-(11, 5, 'Martine Matt', 'martine@stud.ntnu.no'),
-(12, 5, 'Ola Oops', 'ola.oops@stud.ntnu.no'),
-(13, 5, 'Kari Kræsj', 'kari.krasj@stud.ntnu.no'),
-(14, 4, 'Professor Plott', 'plott@math.ntnu.no'),
-(15, 5, 'Lars Laptop', 'lars@stud.ntnu.no'),
-(16, 2, 'Mona Møte', 'mona.mote@ntnu.no'),
-(17, 5, 'Henrik Hull', 'henrik@stud.ntnu.no'),
-(18, 4, 'Berit Bø', 'berit.bø@ntnu.no'),
-(19, 3, 'Lift Lars', 'lars.lift@ntnu.no'),
-(20, 3, 'VVS-Vera', 'vera.vvs@ntnu.no'),
-(21, 3, 'Data Dag', 'dag.data@ntnu.no'),
-(22, 3, 'Støvsuger-Siv', 'siv@ntnu.no'),
-(23, 4, 'Pedro Pedal', 'pedro@ntnu.no'),
-(24, 5, 'Tiril Trøtt', 'tiril@stud.ntnu.no'),
-(25, 5, 'Erik Eksamen', 'erik@stud.ntnu.no'),
-(26, 5, 'Guro Grønn', 'guro@stud.ntnu.no'),
-(27, 5, 'Simen Søvn', 'simen@stud.ntnu.no'),
-(28, 5, 'Anja Anelse', 'anja@stud.ntnu.no'),
-(29, 5, 'Vetle Virus', 'vetle@stud.ntnu.no'),
-(30, 5, 'Ida Internett', 'ida@stud.ntnu.no');
+INSERT INTO `user` (`email`, `role_id`, `name`) VALUES
+('rektor@ntnu.no', 1, 'Rektor Strålande'),
+('britt.breiflabb@ntnu.no', 2, 'Britt Breiflabb'),
+('steinar@ntnu.no', 3, 'IT-Steinar'),
+('rolf@ntnu.no', 3, 'Rørlegger Rolf'),
+('elin@ntnu.no', 3, 'Elektriker Elin'),
+('vidar@ntnu.no', 3, 'Vaktmester Vidar'),
+('kjell@ntnu.no', 3, 'Kaffemaskin Kjell'),
+('finn.forsker@ntnu.no', 4, 'Foreleser Finn'),
+('siri.sokk@ntnu.no', 4, 'Siri Sokk'),
+('nicolai@stud.ntnu.no', 5, 'Nicolai Nerd'),
+('martine@stud.ntnu.no', 5, 'Martine Matt'),
+('ola.oops@stud.ntnu.no', 5, 'Ola Oops'),
+('kari.krasj@stud.ntnu.no', 5, 'Kari Kræsj'),
+('plott@math.ntnu.no', 4, 'Professor Plott'),
+('lars@stud.ntnu.no', 5, 'Lars Laptop'),
+('mona.mote@ntnu.no', 2, 'Mona Møte'),
+('henrik@stud.ntnu.no', 5, 'Henrik Hull'),
+('berit.bø@ntnu.no', 4, 'Berit Bø'),
+('lars.lift@ntnu.no', 3, 'Lift Lars'),
+('vera.vvs@ntnu.no', 3, 'VVS-Vera'),
+('dag.data@ntnu.no', 3, 'Data Dag'),
+('siv@ntnu.no', 3, 'Støvsuger-Siv'),
+('pedro@ntnu.no', 4, 'Pedro Pedal'),
+('tiril@stud.ntnu.no', 5, 'Tiril Trøtt'),
+('erik@stud.ntnu.no', 5, 'Erik Eksamen'),
+('guro@stud.ntnu.no', 5, 'Guro Grønn'),
+('simen@stud.ntnu.no', 5, 'Simen Søvn'),
+('anja@stud.ntnu.no', 5, 'Anja Anelse'),
+('vetle@stud.ntnu.no', 5, 'Vetle Virus'),
+('ida@stud.ntnu.no', 5, 'Ida Internett');
 
 --
 -- Indexes for dumped tables
@@ -874,8 +875,8 @@ INSERT INTO `user` (`id`, `role_id`, `name`, `email`) VALUES
 -- Indexes for table `availability`
 --
 ALTER TABLE `availability`
-  ADD PRIMARY KEY (`day`,`start_time`,`end_time`,`tech_id`),
-  ADD KEY `tech_id` (`tech_id`);
+  ADD PRIMARY KEY (`day`,`start_time`,`end_time`,`tech_email`),
+  ADD KEY `tech_email` (`tech_email`);
 
 --
 -- Indexes for table `building`
@@ -895,7 +896,7 @@ ALTER TABLE `floor`
 --
 ALTER TABLE `incident`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `user_id` (`user_id`);
+  ADD KEY `user_email` (`user_email`);
 
 --
 -- Indexes for table `incident_location`
@@ -966,28 +967,21 @@ ALTER TABLE `skill_requirement`
 -- Indexes for table `technician`
 --
 ALTER TABLE `technician`
-  ADD PRIMARY KEY (`tech_id`);
+  ADD PRIMARY KEY (`tech_email`);
 
 --
 -- Indexes for table `technician_skill`
 --
 ALTER TABLE `technician_skill`
-  ADD PRIMARY KEY (`tech_id`,`skill_id`),
+  ADD PRIMARY KEY (`tech_email`,`skill_id`),
   ADD KEY `skill_id` (`skill_id`);
 
 --
 -- Indexes for table `technician_work`
 --
 ALTER TABLE `technician_work`
-  ADD PRIMARY KEY (`tech_id`,`task_id`),
+  ADD PRIMARY KEY (`tech_email`,`task_id`),
   ADD KEY `task_id` (`task_id`);
-
---
--- Indexes for table `user`
---
-ALTER TABLE `user`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `role_id` (`role_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -1030,12 +1024,6 @@ ALTER TABLE `skill`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
--- AUTO_INCREMENT for table `user`
---
-ALTER TABLE `user`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
-
---
 -- Begrensninger for dumpede tabeller
 --
 
@@ -1043,7 +1031,7 @@ ALTER TABLE `user`
 -- Begrensninger for tabell `availability`
 --
 ALTER TABLE `availability`
-  ADD CONSTRAINT `availability_ibfk_1` FOREIGN KEY (`tech_id`) REFERENCES `technician` (`tech_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `availability_ibfk_1` FOREIGN KEY (`tech_email`) REFERENCES `technician` (`tech_email`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Begrensninger for tabell `floor`
@@ -1055,7 +1043,7 @@ ALTER TABLE `floor`
 -- Begrensninger for tabell `incident`
 --
 ALTER TABLE `incident`
-  ADD CONSTRAINT `incident_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+  ADD CONSTRAINT `incident_ibfk_1` FOREIGN KEY (`user_email`) REFERENCES `user` (`email`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Begrensninger for tabell `incident_location`
@@ -1111,7 +1099,7 @@ ALTER TABLE `skill_requirement`
 -- Begrensninger for tabell `technician`
 --
 ALTER TABLE `technician`
-  ADD CONSTRAINT `technician_ibfk_1` FOREIGN KEY (`tech_id`) REFERENCES `user` (`id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `technician_ibfk_1` FOREIGN KEY (`tech_email`) REFERENCES `user` (`email`) ON UPDATE CASCADE;
 
 -- View incident stats without personal data
 DROP VIEW IF EXISTS `public_view_stats`;
@@ -1132,19 +1120,19 @@ FROM `incident`;
 -- View for students and staff (only their own incidents)
 DROP VIEW IF EXISTS `user_incidents_view`;
 CREATE VIEW `user_incidents_view` AS
-SELECT i.id, i.user_id, i.reported_at, i.severity_level, i.description, i.category, i.status,
+SELECT i.id, i.user_email, i.reported_at, i.severity_level, i.description, i.category, i.status,
        b.name AS building_name, b.id AS building_id, il.floor_nr, il.room_nr,
        u.name AS reporter_name, u.email AS reporter_email
 FROM incident i
 LEFT JOIN incident_location il ON i.id = il.incident_id
 LEFT JOIN building b ON il.building_id = b.id
-LEFT JOIN user u ON i.user_id = u.id;
+LEFT JOIN user u ON i.user_email = u.email;
 
 -- Technician tasks (only their assigned tasks)
 DROP VIEW IF EXISTS `technician_tasks_view`;
 CREATE VIEW `technician_tasks_view` AS
 SELECT mt.id, mt.incident_id, mt.type, mt.priority, mt.task_status, mt.estimated_duration,
-       mt.start_time, mt.end_time, tw.tech_id,
+       mt.start_time, mt.end_time, tw.tech_email,
        i.category AS incident_category, i.severity_level, i.status AS incident_status,
        b.name AS building_name, il.floor_nr, il.room_nr,
        u.name AS technician_name
@@ -1153,7 +1141,7 @@ INNER JOIN technician_work tw ON mt.id = tw.task_id
 INNER JOIN incident i ON mt.incident_id = i.id
 LEFT JOIN incident_location il ON i.id = il.incident_id
 LEFT JOIN building b ON il.building_id = b.id
-LEFT JOIN user u ON tw.tech_id = u.id;
+LEFT JOIN user u ON tw.tech_email = u.email;
 
 -- Manager view (all tasks with full info)
 DROP VIEW IF EXISTS `manager_tasks_view`;
@@ -1162,13 +1150,13 @@ SELECT mt.id, mt.incident_id, mt.type, mt.priority, mt.task_status, mt.estimated
        mt.start_time, mt.end_time, inc.category AS incident_category, inc.severity_level,
        b.name AS building_name, il.floor_nr, il.room_nr,
        GROUP_CONCAT(DISTINCT u.name SEPARATOR ', ') AS assigned_technicians,
-       GROUP_CONCAT(DISTINCT u.id SEPARATOR ', ') AS tech_ids
+       GROUP_CONCAT(DISTINCT u.email SEPARATOR ', ') AS tech_emails
 FROM maintenance_task mt
 JOIN incident inc ON mt.incident_id = inc.id
 LEFT JOIN incident_location il ON inc.id = il.incident_id
 LEFT JOIN building b ON il.building_id = b.id
 LEFT JOIN technician_work tw ON mt.id = tw.task_id
-LEFT JOIN user u ON tw.tech_id = u.id
+LEFT JOIN user u ON tw.tech_email = u.email
 GROUP BY mt.id;
 
 -- Roles and permissions 

@@ -49,7 +49,7 @@ def execute_write(sql, params=None):
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
+        if 'user_email' not in session:
             return jsonify({"error": "Login required"}), 401
         return f(*args, **kwargs)
     return decorated_function
@@ -65,12 +65,12 @@ def role_required(roles):
     return decorator
 
 def get_current_user():
-    if 'user_id' in session:
+    if 'user_email' in session:
         return {
-            "id": session['user_id'],
-            "email": session['email'],
+            "email": session['user_email'],
             "role_id": session['role_id'],
-            "role_name": session['role_name']
+            "role_name": session['role_name'],
+            "name": session.get('user_name', '')
         }
     return None
 
@@ -84,7 +84,7 @@ def login():
         return jsonify({"error": "Email is required"}), 400
     
     results, error = execute_query(
-        "SELECT u.id, u.name, u.email, u.role_id, r.name AS role_name "
+        "SELECT u.email, u.name, u.role_id, r.name AS role_name "
         "FROM user u JOIN role r ON u.role_id = r.id WHERE u.email = %s",
         (email,)
     )
@@ -94,16 +94,14 @@ def login():
         return jsonify({"error": "User not found"}), 404
     
     user = results[0]
-    session['user_id'] = user['id']
-    session['email'] = user['email']
+    session['user_email'] = user['email']
     session['role_id'] = user['role_id']
     session['role_name'] = user['role_name']
     session['user_name'] = user['name']
     
     return jsonify({"message": "Login successful", "user": {
-        "id": user['id'],
-        "name": user['name'],
         "email": user['email'],
+        "name": user['name'],
         "role_name": user['role_name']
     }})
 
@@ -147,8 +145,8 @@ def public_stats():
 @role_required(['administrator'])
 def list_users():
     results, error = execute_query(
-        "SELECT u.id, u.name, u.email, u.role_id, r.name AS role_name "
-        "FROM user u JOIN role r ON u.role_id = r.id ORDER BY u.id"
+        "SELECT u.email, u.name, u.role_id, r.name AS role_name "
+        "FROM user u JOIN role r ON u.role_id = r.id ORDER BY u.name"
     )
     if error:
         return jsonify({"error": error}), 500
@@ -172,15 +170,14 @@ def create_user():
     )
     if error:
         return jsonify({"error": error}), 500
-    return jsonify({"message": "User created", "id": result['last_insert_id']}), 201
+    return jsonify({"message": "User created", "email": email}), 201
 
-@app.route('/api/users/<int:user_id>', methods=['PUT'])
+@app.route('/api/users/<string:user_email>', methods=['PUT'])
 @login_required
 @role_required(['administrator'])
-def update_user(user_id):
+def update_user(user_email):
     data = request.json or {}
     name = data.get('name', '').strip()
-    email = data.get('email', '').strip()
     role_id = data.get('role_id')
     
     updates = []
@@ -188,9 +185,6 @@ def update_user(user_id):
     if name:
         updates.append("name = %s")
         params.append(name)
-    if email:
-        updates.append("email = %s")
-        params.append(email)
     if role_id:
         updates.append("role_id = %s")
         params.append(role_id)
@@ -198,23 +192,23 @@ def update_user(user_id):
     if not updates:
         return jsonify({"error": "No fields to update"}), 400
     
-    params.append(user_id)
+    params.append(user_email)
     result, error = execute_write(
-        f"UPDATE user SET {', '.join(updates)} WHERE id = %s",
+        f"UPDATE user SET {', '.join(updates)} WHERE email = %s",
         tuple(params)
     )
     if error:
         return jsonify({"error": error}), 500
     return jsonify({"message": "User updated"})
 
-@app.route('/api/users/<int:user_id>', methods=['DELETE'])
+@app.route('/api/users/<string:user_email>', methods=['DELETE'])
 @login_required
 @role_required(['administrator'])
-def delete_user(user_id):
-    if user_id == session['user_id']:
+def delete_user(user_email):
+    if user_email == session['user_email']:
         return jsonify({"error": "Cannot delete yourself"}), 400
     
-    result, error = execute_write("DELETE FROM user WHERE id = %s", (user_id,))
+    result, error = execute_write("DELETE FROM user WHERE email = %s", (user_email,))
     if error:
         if "1451" in error or "foreign key constraint" in error.lower():
             return jsonify({"error": "Cannot delete user: user is linked to existing technician records and/or has reported incidents"}), 409
@@ -227,7 +221,7 @@ def delete_user(user_id):
 @login_required
 def list_incidents():
     role = session.get('role_name')
-    user_id = session.get('user_id')
+    user_email = session.get('user_email')
     
     if role in ['student', 'staff', 'public_user']:
         results, error = execute_query(
@@ -236,8 +230,8 @@ def list_incidents():
             "FROM user_incidents_view i "
             "LEFT JOIN incident_location il ON i.id = il.incident_id "
             "LEFT JOIN building b ON il.building_id = b.id "
-            "WHERE i.user_id = %s ORDER BY i.reported_at DESC",
-            (user_id,)
+            "WHERE i.user_email = %s ORDER BY i.reported_at DESC",
+            (user_email,)
         )
     elif role == 'technician':
         results, error = execute_query(
@@ -248,9 +242,9 @@ def list_incidents():
             "INNER JOIN technician_work tw ON mt.id = tw.task_id "
             "LEFT JOIN incident_location il ON i.id = il.incident_id "
             "LEFT JOIN building b ON il.building_id = b.id "
-            "WHERE tw.tech_id = %s "
+            "WHERE tw.tech_email = %s "
             "ORDER BY i.reported_at DESC",
-            (user_id,)
+            (user_email,)
         )
     else:
         results, error = execute_query(
@@ -259,7 +253,7 @@ def list_incidents():
             "FROM incident i "
             "LEFT JOIN incident_location il ON i.id = il.incident_id "
             "LEFT JOIN building b ON il.building_id = b.id "
-            "LEFT JOIN user u ON i.user_id = u.id "
+            "LEFT JOIN user u ON i.user_email = u.email "
             "ORDER BY i.reported_at DESC"
         )
     
@@ -276,7 +270,7 @@ def get_incident(incident_id):
         "FROM incident i "
         "LEFT JOIN incident_location il ON i.id = il.incident_id "
         "LEFT JOIN building b ON il.building_id = b.id "
-        "LEFT JOIN user u ON i.user_id = u.id "
+        "LEFT JOIN user u ON i.user_email = u.email "
         "WHERE i.id = %s",
         (incident_id,)
     )
@@ -288,7 +282,7 @@ def get_incident(incident_id):
     incident = results[0]
     role = session.get('role_name')
     
-    if role in ['student', 'staff', 'public_user'] and incident['user_id'] != session.get('user_id'):
+    if role in ['student', 'staff', 'public_user'] and incident.get('user_email') != session.get('user_email'):
         return jsonify({"error": "Access denied"}), 403
     
     history, _ = execute_query(
@@ -300,7 +294,7 @@ def get_incident(incident_id):
     tasks, _ = execute_query(
         "SELECT mt.*, u.name AS tech_name FROM maintenance_task mt "
         "LEFT JOIN technician_work tw ON mt.id = tw.task_id "
-        "LEFT JOIN user u ON tw.tech_id = u.id "
+        "LEFT JOIN user u ON tw.tech_email = u.email "
         "WHERE mt.incident_id = %s",
         (incident_id,)
     )
@@ -344,22 +338,20 @@ def create_incident():
         if not room_check:
             return jsonify({"error": f"Room {room_nr} does not exist on floor {floor_nr} in this building"}), 400
     
-    user_id = None
-    if 'user_id' in session:
-        user_id = session['user_id']
+    user_email = None
+    if 'user_email' in session:
+        user_email = session['user_email']
     elif reporter_email:
-        results, _ = execute_query("SELECT id FROM user WHERE email = %s", (reporter_email,))
-        if results:
-            user_id = results[0]['id']
+        user_email = reporter_email
     
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     try:
         reported_at = datetime.now()
         cursor.execute(
-            "INSERT INTO incident (user_id, reported_at, severity_level, description, category, status) "
+            "INSERT INTO incident (user_email, reported_at, severity_level, description, category, status) "
             "VALUES (%s, %s, %s, %s, %s, 'reported')",
-            (user_id, reported_at, severity_level, description, category)
+            (user_email, reported_at, severity_level, description, category)
         )
         incident_id = cursor.lastrowid
         
@@ -510,7 +502,7 @@ def update_incident_location(incident_id):
 @login_required
 def list_tasks():
     role = session.get('role_name')
-    user_id = session.get('user_id')
+    user_email = session.get('user_email')
     
     if role == 'technician':
         results, error = execute_query(
@@ -518,9 +510,9 @@ def list_tasks():
             "mt.start_time, mt.end_time, mt.incident_category, mt.severity_level, mt.incident_status, "
             "mt.building_name, mt.floor_nr, mt.room_nr, mt.technician_name "
             "FROM technician_tasks_view mt "
-            "WHERE mt.tech_id = %s "
+            "WHERE mt.tech_email = %s "
             "ORDER BY mt.start_time DESC",
-            (user_id,)
+            (user_email,)
         )
     elif role in ['manager', 'administrator']:
         results, error = execute_query(
@@ -569,8 +561,8 @@ def get_task(task_id):
     task['status_history'] = history or []
     
     technicians, _ = execute_query(
-        "SELECT u.id, u.name, u.email FROM technician_work tw "
-        "INNER JOIN user u ON tw.tech_id = u.id WHERE tw.task_id = %s",
+        "SELECT u.email, u.name FROM technician_work tw "
+        "INNER JOIN user u ON tw.tech_email = u.email WHERE tw.task_id = %s",
         (task_id,)
     )
     task['technicians'] = technicians or []
@@ -601,7 +593,7 @@ def create_task():
     priority = data.get('priority', 'Medium')
     estimated_duration = data.get('estimated_duration')
     start_time = data.get('start_time')
-    tech_ids = data.get('tech_ids', [])
+    tech_emails = data.get('tech_emails', [])
     skill_ids = data.get('skill_ids', [])
     resource_ids = data.get('resource_ids', [])
     
@@ -618,10 +610,10 @@ def create_task():
         )
         task_id = cursor.lastrowid
         
-        for tech_id in tech_ids:
+        for tech_email in tech_emails:
             cursor.execute(
-                "INSERT INTO technician_work (tech_id, task_id) VALUES (%s, %s)",
-                (tech_id, task_id)
+                "INSERT INTO technician_work (tech_email, task_id) VALUES (%s, %s)",
+                (tech_email, task_id)
             )
         
         for skill_id in skill_ids:
@@ -733,16 +725,16 @@ def delete_task(task_id):
 @role_required(['manager', 'administrator'])
 def update_task_technicians(task_id):
     data = request.json or {}
-    tech_ids = data.get('tech_ids', [])
+    tech_emails = data.get('tech_emails', [])
     
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     try:
         cursor.execute("DELETE FROM technician_work WHERE task_id = %s", (task_id,))
-        for tech_id in tech_ids:
+        for tech_email in tech_emails:
             cursor.execute(
-                "INSERT INTO technician_work (tech_id, task_id) VALUES (%s, %s)",
-                (tech_id, task_id)
+                "INSERT INTO technician_work (tech_email, task_id) VALUES (%s, %s)",
+                (tech_email, task_id)
             )
         conn.commit()
         return jsonify({"message": "Technicians updated"})
@@ -784,17 +776,17 @@ def update_task_resources(task_id):
 @login_required
 def list_availability():
     role = session.get('role_name')
-    user_id = session.get('user_id')
+    user_email = session.get('user_email')
     
     if role == 'technician':
         results, error = execute_query(
-            "SELECT * FROM availability WHERE tech_id = %s ORDER BY FIELD(day, 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'), start_time",
-            (user_id,)
+            "SELECT * FROM availability WHERE tech_email = %s ORDER BY FIELD(day, 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'), start_time",
+            (user_email,)
         )
     elif role in ['manager', 'administrator']:
         results, error = execute_query(
             "SELECT a.*, u.name AS tech_name FROM availability a "
-            "INNER JOIN user u ON a.tech_id = u.id ORDER BY u.name, FIELD(day, 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday')"
+            "INNER JOIN user u ON a.tech_email = u.email ORDER BY u.name, FIELD(day, 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday')"
         )
     else:
         return jsonify({"error": "Access denied"}), 403
@@ -808,29 +800,29 @@ def list_availability():
 @role_required(['manager', 'administrator'])
 def create_availability():
     data = request.json or {}
-    tech_id = data.get('tech_id')
+    tech_email = data.get('tech_email')
     day = data.get('day')
     start_time = data.get('start_time')
     end_time = data.get('end_time')
     
-    if not all([tech_id, day, start_time, end_time]):
-        return jsonify({"error": "tech_id, day, start_time, and end_time are required"}), 400
+    if not all([tech_email, day, start_time, end_time]):
+        return jsonify({"error": "tech_email, day, start_time, and end_time are required"}), 400
     
     result, error = execute_write(
-        "INSERT INTO availability (tech_id, day, start_time, end_time) VALUES (%s, %s, %s, %s)",
-        (tech_id, day, start_time, end_time)
+        "INSERT INTO availability (tech_email, day, start_time, end_time) VALUES (%s, %s, %s, %s)",
+        (tech_email, day, start_time, end_time)
     )
     if error:
         return jsonify({"error": error}), 500
     return jsonify({"message": "Availability created", "id": result['last_insert_id']}), 201
 
-@app.route('/api/availability/<int:tech_id>/<day>', methods=['DELETE'])
+@app.route('/api/availability/<string:tech_email>/<day>', methods=['DELETE'])
 @login_required
 @role_required(['manager', 'administrator'])
-def delete_availability(tech_id, day):
+def delete_availability(tech_email, day):
     result, error = execute_write(
-        "DELETE FROM availability WHERE tech_id = %s AND day = %s",
-        (tech_id, day)
+        "DELETE FROM availability WHERE tech_email = %s AND day = %s",
+        (tech_email, day)
     )
     if error:
         return jsonify({"error": error}), 500
@@ -983,20 +975,20 @@ def delete_skill(skill_id):
 def list_technicians():
     results, error = execute_query(
         "SELECT t.*, u.name, u.email, t.role AS job_role "
-        "FROM technician t INNER JOIN user u ON t.tech_id = u.id"
+        "FROM technician t INNER JOIN user u ON t.tech_email = u.email"
     )
     if error:
         return jsonify({"error": error}), 500
     return jsonify({"technicians": results})
 
-@app.route('/api/technicians/<int:tech_id>/skills', methods=['GET', 'PUT'])
+@app.route('/api/technicians/<string:tech_email>/skills', methods=['GET', 'PUT'])
 @login_required
 @role_required(['manager', 'administrator'])
-def manage_technician_skills(tech_id):
+def manage_technician_skills(tech_email):
     if request.method == 'GET':
         results, error = execute_query(
-            "SELECT s.* FROM skill s INNER JOIN technician_skill ts ON s.id = ts.skill_id WHERE ts.tech_id = %s",
-            (tech_id,)
+            "SELECT s.* FROM skill s INNER JOIN technician_skill ts ON s.id = ts.skill_id WHERE ts.tech_email = %s",
+            (tech_email,)
         )
         if error:
             return jsonify({"error": error}), 500
@@ -1008,11 +1000,11 @@ def manage_technician_skills(tech_id):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     try:
-        cursor.execute("DELETE FROM technician_skill WHERE tech_id = %s", (tech_id,))
+        cursor.execute("DELETE FROM technician_skill WHERE tech_email = %s", (tech_email,))
         for skill_id in skill_ids:
             cursor.execute(
-                "INSERT INTO technician_skill (tech_id, skill_id) VALUES (%s, %s)",
-                (tech_id, skill_id)
+                "INSERT INTO technician_skill (tech_email, skill_id) VALUES (%s, %s)",
+                (tech_email, skill_id)
             )
         conn.commit()
         return jsonify({"message": "Skills updated"})
@@ -1085,14 +1077,14 @@ QUERIES = {
     "q2": {
         "title": "Maintenance workload per technician for a given week",
         "params": [{"name": "start_date", "label": "Start date (Monday)", "type": "date", "default": "2026-04-14"}],
-        "sql": """SELECT technician.tech_id, user.name AS tech_name,
+        "sql": """SELECT technician.tech_email, user.name AS tech_name,
                   SUM(TIME_TO_SEC(mt.estimated_duration) / 3600) AS estimated_hours,
                   SUM(TIMESTAMPDIFF(SECOND, mt.start_time, mt.end_time) / 3600) AS actual_hours
-                  FROM technician INNER JOIN user ON technician.tech_id = user.id
-                  INNER JOIN technician_work tw ON technician.tech_id = tw.tech_id
+                  FROM technician INNER JOIN user ON technician.tech_email = user.email
+                  INNER JOIN technician_work tw ON technician.tech_email = tw.tech_email
                   INNER JOIN maintenance_task mt ON tw.task_id = mt.id
                   WHERE mt.start_time BETWEEN %s AND DATE_ADD(%s, INTERVAL 6 DAY)
-                  AND mt.start_time IS NOT NULL GROUP BY user.name, technician.tech_id""",
+                  AND mt.start_time IS NOT NULL GROUP BY user.name, technician.tech_email""",
         "param_order": ["start_date", "start_date"]
     },
     "q3": {
@@ -1144,10 +1136,10 @@ QUERIES = {
     "q7": {
         "title": "Technicians and scheduled hours per week",
         "params": [],
-        "sql": """SELECT technician.tech_id, user.name AS technician_name, technician.role,
+        "sql": """SELECT technician.tech_email, user.name AS technician_name, technician.role,
                   SUM(TIMESTAMPDIFF(SECOND, availability.start_time, availability.end_time) / 3600) AS scheduled_hours
-                  FROM technician INNER JOIN availability ON technician.tech_id = availability.tech_id
-                  INNER JOIN user ON technician.tech_id = user.id GROUP BY technician.tech_id, user.name, technician.role
+                  FROM technician INNER JOIN availability ON technician.tech_email = availability.tech_email
+                  INNER JOIN user ON technician.tech_email = user.email GROUP BY technician.tech_email, user.name, technician.role
                   ORDER BY scheduled_hours DESC""",
         "param_order": []
     },
@@ -1158,18 +1150,18 @@ QUERIES = {
             {"name": "email", "label": "Email (partial)", "type": "text", "default": ""}
         ],
         "sql": """SELECT incident.*, user.name AS reporter_name, user.email AS reporter_email
-                  FROM incident INNER JOIN user ON user.id = incident.user_id
+                  FROM incident INNER JOIN user ON user.email = incident.user_email
                   WHERE user.name LIKE %s OR user.email LIKE %s ORDER BY incident.reported_at DESC""",
         "param_order": ["name", "email"]
     },
     "q9": {
         "title": "Task overlaps for the same technician",
         "params": [],
-        "sql": """SELECT user.name AS technician, tw1.tech_id, mt1.id AS task1_id, mt1.start_time AS t1_start,
+        "sql": """SELECT user.name AS technician, tw1.tech_email, mt1.id AS task1_id, mt1.start_time AS t1_start,
                   mt1.end_time AS t1_end, mt2.id AS task2_id, mt2.start_time AS t2_start, mt2.end_time AS t2_end
-                  FROM technician_work tw1 INNER JOIN technician_work tw2 ON tw1.tech_id = tw2.tech_id AND tw1.task_id < tw2.task_id
+                  FROM technician_work tw1 INNER JOIN technician_work tw2 ON tw1.tech_email = tw2.tech_email AND tw1.task_id < tw2.task_id
                   INNER JOIN maintenance_task mt1 ON mt1.id = tw1.task_id INNER JOIN maintenance_task mt2 ON mt2.id = tw2.task_id
-                  INNER JOIN technician ON tw1.tech_id = technician.tech_id INNER JOIN user ON technician.tech_id = user.id
+                  INNER JOIN technician ON tw1.tech_email = technician.tech_email INNER JOIN user ON technician.tech_email = user.email
                   WHERE mt1.start_time < mt2.end_time AND mt2.start_time < mt1.end_time
                   AND mt1.start_time IS NOT NULL AND mt2.start_time IS NOT NULL
                   ORDER BY user.name, mt1.start_time""",

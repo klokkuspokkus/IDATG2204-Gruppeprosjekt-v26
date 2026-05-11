@@ -720,8 +720,8 @@
     <h3>Add Availability</h3>
     <div class="form-row">
       <div class="form-group">
-        <label>Technician ID *</label>
-        <input type="number" id="avail-tech" placeholder="Tech ID">
+        <label>Technician Email *</label>
+        <input type="email" id="avail-tech" placeholder="email@ntnu.no">
       </div>
       <div class="form-group">
         <label>Day</label>
@@ -979,6 +979,14 @@ async function createTask() {
     }
     return ids;
   };
+  const getSelectedValues = (selId) => {
+    const sel = document.getElementById(selId);
+    const vals = [];
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].selected) vals.push(sel.options[i].value);
+    }
+    return vals;
+  };
   try {
     const res = await fetch('/api/tasks', {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -988,7 +996,7 @@ async function createTask() {
         priority: document.getElementById('task-priority').value,
         estimated_duration: document.getElementById('task-duration').value,
         start_time: document.getElementById('task-start').value || null,
-        tech_ids: getSelectedIds('task-techs'),
+        tech_emails: getSelectedValues('task-techs'),
         skill_ids: getSelectedIds('task-skills'),
         resource_ids: getSelectedIds('task-resources')
       })
@@ -1048,8 +1056,8 @@ async function loadUsers() {
     const data = await res.json();
     if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
     const canDelUsr = currentUser && ['administrator'].includes(currentUser.role_name);
-    el.innerHTML = renderTable(data.users || data, ['id','name','email','role_name'],
-      canDelUsr ? (r) => '<button class="btn btn-ghost" style="padding:4px 8px;font-size:.78rem;color:var(--red);" onclick="deleteUser(' + r.id + ')">Del</button>' : null
+    el.innerHTML = renderTable(data.users || data, ['email','name','role_name'],
+      canDelUsr ? (r) => '<button class="btn btn-ghost" style="padding:4px 8px;font-size:.78rem;color:var(--red);" onclick="deleteUser(\'' + r.email + '\')">Del</button>' : null
     );
   } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
 }
@@ -1117,7 +1125,7 @@ async function loadTechnicians() {
     const res = await fetch('/api/technicians');
     const data = await res.json();
     if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
-    el.innerHTML = renderTable(data.technicians || data, ['tech_id','name','email','role','employement_status']);
+    el.innerHTML = renderTable(data.technicians || data, ['tech_email','name','email','role','employement_status']);
   } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
 }
 
@@ -1128,7 +1136,7 @@ async function loadAvailability() {
     const res = await fetch('/api/availability');
     const data = await res.json();
     if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
-    el.innerHTML = renderTable(data.availability || data, ['tech_id','tech_name','day','start_time','end_time']);
+    el.innerHTML = renderTable(data.availability || data, ['tech_email','tech_name','day','start_time','end_time']);
   } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
 }
 
@@ -1142,7 +1150,7 @@ async function createAvailability() {
     const res = await fetch('/api/availability', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        tech_id: parseInt(document.getElementById('avail-tech').value),
+        tech_email: document.getElementById('avail-tech').value,
         day: document.getElementById('avail-day').value,
         start_time: document.getElementById('avail-start').value,
         end_time: document.getElementById('avail-end').value
@@ -1243,7 +1251,7 @@ function populateTechSelect(selectId) {
   if (!sel) return;
   sel.innerHTML = '';
   (appData.technicians || []).forEach(t => {
-    sel.innerHTML += '<option value="' + t.tech_id + '">' + escHtml(t.name) + ' (ID: ' + t.tech_id + ')</option>';
+    sel.innerHTML += '<option value="' + t.tech_email + '">' + escHtml(t.name) + ' (' + t.tech_email + ')</option>';
   });
 }
 
@@ -1412,10 +1420,10 @@ async function openEditTask(id) {
     document.getElementById('edit-task-end').value = task.end_time ? task.end_time.slice(0,16) : '';
 
     populateTechSelect('edit-task-techs');
-    const techIds = (task.technicians || []).map(t => t.id);
+    const techEmails = (task.technicians || []).map(t => t.email);
     const techSel = document.getElementById('edit-task-techs');
     for (let i = 0; i < techSel.options.length; i++) {
-      if (techIds.includes(parseInt(techSel.options[i].value))) techSel.options[i].selected = true;
+      if (techEmails.includes(techSel.options[i].value)) techSel.options[i].selected = true;
     }
 
     populateResourceSelect('edit-task-resources');
@@ -1449,6 +1457,14 @@ async function saveEditTask() {
     }
     return ids;
   };
+  const getSelectedValues = (selId) => {
+    const sel = document.getElementById(selId);
+    const vals = [];
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].selected) vals.push(sel.options[i].value);
+    }
+    return vals;
+  };
   try {
     const res = await fetch('/api/tasks/' + editTaskId, {
       method:'PUT', headers:{'Content-Type':'application/json'},
@@ -1459,7 +1475,7 @@ async function saveEditTask() {
     if (isMgr) {
       await fetch('/api/tasks/' + editTaskId + '/technicians', {
         method:'PUT', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ tech_ids: getSelectedIds('edit-task-techs') })
+        body:JSON.stringify({ tech_emails: getSelectedValues('edit-task-techs') })
       });
       await fetch('/api/tasks/' + editTaskId + '/resources', {
         method:'PUT', headers:{'Content-Type':'application/json'},
@@ -1521,10 +1537,10 @@ async function deleteBuilding(id) {
   } catch(e) { alert('Delete failed: ' + e.message); }
 }
 
-async function deleteUser(id) {
-  if (!confirm('Delete user #' + id + '?')) return;
+async function deleteUser(email) {
+  if (!confirm('Delete user ' + email + '?')) return;
   try {
-    const res = await fetch('/api/users/' + id, { method:'DELETE' });
+    const res = await fetch('/api/users/' + encodeURIComponent(email), { method:'DELETE' });
     const data = await res.json();
     if (data.error) { alert('Error: ' + data.error); return; }
     loadUsers();
