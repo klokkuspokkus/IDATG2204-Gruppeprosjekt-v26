@@ -725,6 +725,31 @@ def update_task_technicians(task_id):
         cursor.close()
         conn.close()
 
+@app.route('/api/tasks/<int:task_id>/resources', methods=['PUT'])
+@login_required
+@role_required(['manager', 'administrator'])
+def update_task_resources(task_id):
+    data = request.json or {}
+    resource_ids = data.get('resource_ids', [])
+
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("DELETE FROM resource_requirement WHERE task_id = %s", (task_id,))
+        for resource_id in resource_ids:
+            cursor.execute(
+                "INSERT INTO resource_requirement (resource_id, task_id) VALUES (%s, %s)",
+                (resource_id, task_id)
+            )
+        conn.commit()
+        return jsonify({"message": "Resources updated"})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 # ── Technician Availability ───────────────────────────────────────────────────
 
 @app.route('/api/availability', methods=['GET'])

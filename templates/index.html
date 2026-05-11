@@ -441,6 +441,58 @@
   </div>
 </div>
 
+<!-- Edit Incident Modal -->
+<div class="modal-overlay" id="modal-edit-incident">
+  <div class="modal">
+    <h3>Edit Incident</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Status</label>
+        <select id="edit-inc-status">
+          <option value="reported">Reported</option>
+          <option value="verified">Verified</option>
+          <option value="assigned">Assigned</option>
+          <option value="resolved">Resolved</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Severity</label>
+        <select id="edit-inc-severity">
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+          <option value="Critical">Critical</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category</label>
+        <select id="edit-inc-category">
+          <option value="IT">IT</option>
+          <option value="Plumbing">Plumbing</option>
+          <option value="Electrical">Electrical</option>
+          <option value="HVAC">HVAC</option>
+          <option value="Carpentry">Carpentry</option>
+          <option value="General">General</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="edit-inc-desc" placeholder="Incident description"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-primary" onclick="saveEditIncident()">Save</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-incident')">Cancel</button>
+    </div>
+    <p id="edit-incident-error" style="color:var(--red);font-size:.8rem;margin-top:8px;display:none;"></p>
+  </div>
+</div>
+
 <!-- Create Task Modal -->
 <div class="modal-overlay" id="modal-task">
   <div class="modal">
@@ -480,12 +532,18 @@
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label>Assign Technicians (comma-separated IDs)</label>
-        <input type="text" id="task-techs" placeholder="e.g. 3,4,5">
+        <label>Assign Technicians</label>
+        <select id="task-techs" multiple style="min-height:100px;"></select>
       </div>
       <div class="form-group">
-        <label>Required Skills (comma-separated IDs)</label>
-        <input type="text" id="task-skills" placeholder="e.g. 1,2">
+        <label>Required Skills</label>
+        <select id="task-skills" multiple style="min-height:80px;"></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Assign Resources</label>
+        <select id="task-resources" multiple style="min-height:100px;"></select>
       </div>
     </div>
     <div style="display:flex;gap:10px;margin-top:16px;">
@@ -493,6 +551,72 @@
       <button class="btn btn-ghost" onclick="closeModal('modal-task')">Cancel</button>
     </div>
     <p id="task-error" style="color:var(--red);font-size:.8rem;margin-top:8px;display:none;"></p>
+  </div>
+</div>
+
+<!-- Edit Task Modal -->
+<div class="modal-overlay" id="modal-edit-task">
+  <div class="modal">
+    <h3>Edit Task</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Status</label>
+        <select id="edit-task-status">
+          <option value="Not started">Not started</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Finished">Finished</option>
+          <option value="Aborted">Aborted</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="edit-task-priority">
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row" id="edit-task-extras">
+      <div class="form-group">
+        <label>Type</label>
+        <select id="edit-task-type">
+          <option value="Inspection">Inspection</option>
+          <option value="Repair">Repair</option>
+          <option value="Replacement">Replacement</option>
+          <option value="Preventive maintenance">Preventive Maintenance</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Estimated Duration</label>
+        <input type="time" id="edit-task-duration">
+      </div>
+    </div>
+    <div class="form-row" id="edit-task-times">
+      <div class="form-group">
+        <label>Start Time</label>
+        <input type="datetime-local" id="edit-task-start">
+      </div>
+      <div class="form-group">
+        <label>End Time</label>
+        <input type="datetime-local" id="edit-task-end">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Assign Technicians</label>
+        <select id="edit-task-techs" multiple style="min-height:100px;"></select>
+      </div>
+      <div class="form-group">
+        <label>Assign Resources</label>
+        <select id="edit-task-resources" multiple style="min-height:100px;"></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-primary" onclick="saveEditTask()">Save</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit-task')">Cancel</button>
+    </div>
+    <p id="edit-task-error" style="color:var(--red);font-size:.8rem;margin-top:8px;display:none;"></p>
   </div>
 </div>
 
@@ -656,7 +780,7 @@
 const QUERY_META = {{ queries | tojson }};
 let activeSection = 'dashboard';
 let currentUser = null;
-let appData = { buildings: [], roles: [], skills: [] };
+let appData = { buildings: [], roles: [], skills: [], technicians: [], resources: [] };
 
 async function checkAuth() {
   try {
@@ -770,7 +894,10 @@ async function loadIncidents() {
     const res = await fetch('/api/incidents');
     const data = await res.json();
     if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
-    el.innerHTML = renderTable(data.incidents || [], ['id','reported_at','category','severity_level','status','description','building_name','floor_nr','room_nr']);
+    const canEdit = currentUser && ['manager','administrator'].includes(currentUser.role_name);
+    el.innerHTML = renderTable(data.incidents || [], ['id','reported_at','category','severity_level','status','description','building_name','floor_nr','room_nr'],
+      canEdit ? (r) => '<button class="btn btn-ghost" style="padding:4px 10px;font-size:.78rem;" onclick="openEditIncident(' + r.id + ')">Edit</button>' : null
+    );
   } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
 }
 
@@ -821,18 +948,32 @@ async function loadTasks() {
     const res = await fetch('/api/tasks');
     const data = await res.json();
     if (data.error) { el.innerHTML = '<div class="error-box">' + escHtml(data.error) + '</div>'; return; }
-    el.innerHTML = renderTable(data.tasks || [], ['id','incident_id','type','priority','task_status','estimated_duration','start_time','end_time','incident_category','severity_level','building_name','floor_nr','room_nr','technician_name','assigned_technicians']);
+    const canEdit = currentUser && ['technician','manager','administrator'].includes(currentUser.role_name);
+    el.innerHTML = renderTable(data.tasks || [], ['id','incident_id','type','priority','task_status','estimated_duration','start_time','end_time','incident_category','severity_level','building_name','floor_nr','room_nr','technician_name','assigned_technicians'],
+      canEdit ? (r) => '<button class="btn btn-ghost" style="padding:4px 10px;font-size:.78rem;" onclick="openEditTask(' + r.id + ')">Edit</button>' : null
+    );
   } catch(e) { el.innerHTML = '<div class="error-box">Failed to load</div>'; }
 }
 
 function showCreateTask() {
   document.getElementById('task-error').style.display = 'none';
+  populateTechSelect('task-techs');
+  populateSkillSelect('task-skills');
+  populateResourceSelect('task-resources');
   document.getElementById('modal-task').classList.add('active');
 }
 
 async function createTask() {
   const incidentId = document.getElementById('task-incident').value;
   if (!incidentId) { showError('task-error', 'Incident ID required'); return; }
+  const getSelectedIds = (selId) => {
+    const sel = document.getElementById(selId);
+    const ids = [];
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].selected) ids.push(parseInt(sel.options[i].value));
+    }
+    return ids;
+  };
   try {
     const res = await fetch('/api/tasks', {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -842,8 +983,9 @@ async function createTask() {
         priority: document.getElementById('task-priority').value,
         estimated_duration: document.getElementById('task-duration').value,
         start_time: document.getElementById('task-start').value || null,
-        tech_ids: (document.getElementById('task-techs').value || '').split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x)),
-        skill_ids: (document.getElementById('task-skills').value || '').split(',').map(x=>parseInt(x.trim())).filter(x=>!isNaN(x))
+        tech_ids: getSelectedIds('task-techs'),
+        skill_ids: getSelectedIds('task-skills'),
+        resource_ids: getSelectedIds('task-resources')
       })
     });
     const data = await res.json();
@@ -1055,14 +1197,18 @@ function populateRoles() {
 
 async function loadInitialData() {
   try {
-    const [b, r, s] = await Promise.all([
+    const [b, r, s, t, res] = await Promise.all([
       fetch('/api/buildings').then(r=>r.json()),
       fetch('/api/roles').then(r=>r.json()),
-      fetch('/api/skills').then(r=>r.json())
+      fetch('/api/skills').then(r=>r.json()),
+      fetch('/api/technicians').then(r=>r.json()),
+      fetch('/api/resources').then(r=>r.json())
     ]);
     appData.buildings = b.buildings || [];
     appData.roles = r.roles || [];
     appData.skills = s.skills || [];
+    appData.technicians = t.technicians || [];
+    appData.resources = res.resources || [];
   } catch(e) {}
 }
 
@@ -1075,6 +1221,33 @@ function showLoginUI() {
   loadInitialData();
 }
 
+function populateTechSelect(selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = '';
+  (appData.technicians || []).forEach(t => {
+    sel.innerHTML += '<option value="' + t.tech_id + '">' + escHtml(t.name) + ' (ID: ' + t.tech_id + ')</option>';
+  });
+}
+
+function populateResourceSelect(selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = '';
+  (appData.resources || []).forEach(r => {
+    sel.innerHTML += '<option value="' + r.id + '">' + escHtml(r.type) + ' - ' + escHtml(r.building_name || '') + ' (ID: ' + r.id + ')</option>';
+  });
+}
+
+function populateSkillSelect(selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = '';
+  (appData.skills || []).forEach(s => {
+    sel.innerHTML += '<option value="' + s.id + '">' + escHtml(s.name) + '</option>';
+  });
+}
+
 function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
 function showError(elId, msg) {
@@ -1083,9 +1256,10 @@ function showError(elId, msg) {
   el.style.display = 'block';
 }
 
-function renderTable(rows, cols) {
+function renderTable(rows, cols, actionFn) {
   if (!rows || rows.length === 0) return '<div class="empty"><div class="empty-icon">🔍</div><p>No results found.</p></div>';
   if (typeof cols === 'undefined') cols = Object.keys(rows[0]);
+  if (actionFn) cols = [...cols, 'actions'];
   const STATUS_BADGES = {
     resolved:'badge-resolved', closed:'badge-closed', assigned:'badge-assigned', reported:'badge-reported', verified:'badge-verified',
     high:'badge-high', critical:'badge-critical', medium:'badge-medium', low:'badge-low',
@@ -1099,6 +1273,10 @@ function renderTable(rows, cols) {
   rows.forEach(row => {
     html += '<tr>';
     cols.forEach(c => {
+      if (c === 'actions' && actionFn) {
+        html += '<td>' + actionFn(row) + '</td>';
+        return;
+      }
       const val = row[c];
       let cell = '';
       if (val === null || val === undefined) { cell = '<span style="color:var(--muted)">—</span>'; }
@@ -1157,6 +1335,123 @@ async function checkHealth() {
     if (data.status === 'ok') { dot.className='health-dot ok'; document.getElementById('health-status').innerHTML='<span class="health-dot ok"></span>DB Connected'; }
     else { dot.className='health-dot err'; document.getElementById('health-status').innerHTML='<span class="health-dot err"></span>DB Error'; }
   } catch(e) { document.getElementById('health-status').innerHTML='<span class="health-dot err"></span>No Connection'; }
+}
+
+let editIncidentId = null;
+let editTaskId = null;
+
+async function openEditIncident(id) {
+  editIncidentId = id;
+  document.getElementById('edit-incident-error').style.display = 'none';
+  try {
+    const res = await fetch('/api/incidents/' + id);
+    const data = await res.json();
+    if (data.error) { showError('edit-incident-error', data.error); return; }
+    const inc = data.incident;
+    document.getElementById('edit-inc-status').value = inc.status || 'reported';
+    document.getElementById('edit-inc-severity').value = inc.severity_level || 'Medium';
+    document.getElementById('edit-inc-category').value = inc.category || 'General';
+    document.getElementById('edit-inc-desc').value = inc.description || '';
+    document.getElementById('modal-edit-incident').classList.add('active');
+  } catch(e) { showError('edit-incident-error', 'Failed to load incident'); }
+}
+
+async function saveEditIncident() {
+  const body = {
+    status: document.getElementById('edit-inc-status').value,
+    severity_level: document.getElementById('edit-inc-severity').value,
+    category: document.getElementById('edit-inc-category').value,
+    description: document.getElementById('edit-inc-desc').value.trim()
+  };
+  try {
+    const res = await fetch('/api/incidents/' + editIncidentId, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.error) { showError('edit-incident-error', data.error); return; }
+    closeModal('modal-edit-incident');
+    loadIncidents();
+    loadStats();
+  } catch(e) { showError('edit-incident-error', 'Failed to update'); }
+}
+
+async function openEditTask(id) {
+  editTaskId = id;
+  document.getElementById('edit-task-error').style.display = 'none';
+  const isMgr = currentUser && ['manager','administrator'].includes(currentUser.role_name);
+  document.getElementById('edit-task-extras').style.display = isMgr ? '' : 'none';
+  document.getElementById('edit-task-times').style.display = isMgr ? '' : 'none';
+  try {
+    const res = await fetch('/api/tasks/' + id);
+    const data = await res.json();
+    if (data.error) { showError('edit-task-error', data.error); return; }
+    const task = data.task;
+    document.getElementById('edit-task-status').value = task.task_status || 'Not started';
+    document.getElementById('edit-task-priority').value = task.priority || 'Medium';
+    document.getElementById('edit-task-type').value = task.type || 'Repair';
+    document.getElementById('edit-task-duration').value = task.estimated_duration || '';
+    document.getElementById('edit-task-start').value = task.start_time ? task.start_time.slice(0,16) : '';
+    document.getElementById('edit-task-end').value = task.end_time ? task.end_time.slice(0,16) : '';
+
+    populateTechSelect('edit-task-techs');
+    const techIds = (task.technicians || []).map(t => t.id);
+    const techSel = document.getElementById('edit-task-techs');
+    for (let i = 0; i < techSel.options.length; i++) {
+      if (techIds.includes(parseInt(techSel.options[i].value))) techSel.options[i].selected = true;
+    }
+
+    populateResourceSelect('edit-task-resources');
+    const resIds = (task.resources || []).map(r => r.id);
+    const resSel = document.getElementById('edit-task-resources');
+    for (let i = 0; i < resSel.options.length; i++) {
+      if (resIds.includes(parseInt(resSel.options[i].value))) resSel.options[i].selected = true;
+    }
+
+    document.getElementById('modal-edit-task').classList.add('active');
+  } catch(e) { showError('edit-task-error', 'Failed to load task'); }
+}
+
+async function saveEditTask() {
+  const isMgr = currentUser && ['manager','administrator'].includes(currentUser.role_name);
+  const body = {
+    task_status: document.getElementById('edit-task-status').value
+  };
+  if (isMgr) {
+    body.priority = document.getElementById('edit-task-priority').value;
+    body.type = document.getElementById('edit-task-type').value;
+    body.estimated_duration = document.getElementById('edit-task-duration').value || null;
+    body.start_time = document.getElementById('edit-task-start').value || null;
+    body.end_time = document.getElementById('edit-task-end').value || null;
+  }
+  const getSelectedIds = (selId) => {
+    const sel = document.getElementById(selId);
+    const ids = [];
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].selected) ids.push(parseInt(sel.options[i].value));
+    }
+    return ids;
+  };
+  try {
+    const res = await fetch('/api/tasks/' + editTaskId, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.error) { showError('edit-task-error', data.error); return; }
+    if (isMgr) {
+      await fetch('/api/tasks/' + editTaskId + '/technicians', {
+        method:'PUT', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ tech_ids: getSelectedIds('edit-task-techs') })
+      });
+      await fetch('/api/tasks/' + editTaskId + '/resources', {
+        method:'PUT', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ resource_ids: getSelectedIds('edit-task-resources') })
+      });
+    }
+    closeModal('modal-edit-task');
+    loadTasks();
+  } catch(e) { showError('edit-task-error', 'Failed to update'); }
 }
 
 checkAuth();
