@@ -1478,7 +1478,7 @@ async function deleteIncident(id) {
     const data = await res.json();
     if (data.error) { alert('Error: ' + data.error); return; }
     loadIncidents(); loadStats();
-  } catch(e) { alert('Delete failed'); }
+  } catch(e) { alert('Delete failed: ' + e.message); }
 }
 
 async function deleteTask(id) {
@@ -1488,7 +1488,7 @@ async function deleteTask(id) {
     const data = await res.json();
     if (data.error) { alert('Error: ' + data.error); return; }
     loadTasks();
-  } catch(e) { alert('Delete failed'); }
+  } catch(e) { alert('Delete failed: ' + e.message); }
 }
 
 async function deleteResource(id) {
@@ -1498,7 +1498,7 @@ async function deleteResource(id) {
     const data = await res.json();
     if (data.error) { alert('Error: ' + data.error); return; }
     loadResources();
-  } catch(e) { alert('Delete failed'); }
+  } catch(e) { alert('Delete failed: ' + e.message); }
 }
 
 async function deleteSkill(id) {
@@ -1508,7 +1508,7 @@ async function deleteSkill(id) {
     const data = await res.json();
     if (data.error) { alert('Error: ' + data.error); return; }
     loadSkills();
-  } catch(e) { alert('Delete failed'); }
+  } catch(e) { alert('Delete failed: ' + e.message); }
 }
 
 async function deleteBuilding(id) {
@@ -1518,7 +1518,7 @@ async function deleteBuilding(id) {
     const data = await res.json();
     if (data.error) { alert('Error: ' + data.error); return; }
     loadBuildings();
-  } catch(e) { alert('Delete failed'); }
+  } catch(e) { alert('Delete failed: ' + e.message); }
 }
 
 async function deleteUser(id) {
@@ -1528,7 +1528,7 @@ async function deleteUser(id) {
     const data = await res.json();
     if (data.error) { alert('Error: ' + data.error); return; }
     loadUsers();
-  } catch(e) { alert('Delete failed'); }
+  } catch(e) { alert('Delete failed: ' + e.message); }
 }
 
 checkAuth();

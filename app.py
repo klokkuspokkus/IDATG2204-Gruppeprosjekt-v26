@@ -216,6 +216,8 @@ def delete_user(user_id):
     
     result, error = execute_write("DELETE FROM user WHERE id = %s", (user_id,))
     if error:
+        if "1451" in error or "foreign key constraint" in error.lower():
+            return jsonify({"error": "Cannot delete user: user is linked to existing technician records and/or has reported incidents"}), 409
         return jsonify({"error": error}), 500
     return jsonify({"message": "User deleted"})
 
@@ -455,6 +457,9 @@ def delete_incident(incident_id):
         cursor.execute("DELETE FROM incident WHERE id = %s", (incident_id,))
         conn.commit()
         return jsonify({"message": "Incident deleted"})
+    except mysql.connector.errors.IntegrityError as e:
+        conn.rollback()
+        return jsonify({"error": "Cannot delete incident: it is still referenced by other records"}), 409
     except Exception as e:
         conn.rollback()
         return jsonify({"error": str(e)}), 500
@@ -718,6 +723,8 @@ def update_task(task_id):
 def delete_task(task_id):
     result, error = execute_write("DELETE FROM maintenance_task WHERE id = %s", (task_id,))
     if error:
+        if "1451" in error or "foreign key constraint" in error.lower():
+            return jsonify({"error": "Cannot delete task: one or more resource usage records are linked to this task. Remove them first."}), 409
         return jsonify({"error": error}), 500
     return jsonify({"message": "Task deleted"})
 
@@ -931,6 +938,8 @@ def update_resource(resource_id):
 def delete_resource(resource_id):
     result, error = execute_write("DELETE FROM resource WHERE id = %s", (resource_id,))
     if error:
+        if "1451" in error or "foreign key constraint" in error.lower():
+            return jsonify({"error": "Cannot delete resource: it is still required by or used in one or more tasks. Remove those associations first."}), 409
         return jsonify({"error": error}), 500
     return jsonify({"message": "Resource deleted"})
 
@@ -964,6 +973,8 @@ def create_skill():
 def delete_skill(skill_id):
     result, error = execute_write("DELETE FROM skill WHERE id = %s", (skill_id,))
     if error:
+        if "1451" in error or "foreign key constraint" in error.lower():
+            return jsonify({"error": "Cannot delete skill: it is still required by one or more tasks. Remove those skill requirements first."}), 409
         return jsonify({"error": error}), 500
     return jsonify({"message": "Skill deleted"})
 
@@ -1027,6 +1038,8 @@ def list_buildings():
 def delete_building(building_id):
     result, error = execute_write("DELETE FROM building WHERE id = %s", (building_id,))
     if error:
+        if "1451" in error or "foreign key constraint" in error.lower():
+            return jsonify({"error": "Cannot delete building: it still has incidents, floors, or resources linked to it. Remove those associations first."}), 409
         return jsonify({"error": error}), 500
     return jsonify({"message": "Building deleted"})
 
