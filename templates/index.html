@@ -427,12 +427,6 @@
         <input type="number" id="inc-room" placeholder="100">
       </div>
     </div>
-    <div class="form-row" id="inc-email-row">
-      <div class="form-group">
-        <label>Your Email (optional, to track your reports)</label>
-        <input type="email" id="inc-email" placeholder="email@example.com">
-      </div>
-    </div>
     <div style="display:flex;gap:10px;margin-top:16px;">
       <button class="btn btn-primary" onclick="createIncident()">Submit</button>
       <button class="btn btn-ghost" onclick="closeModal('modal-incident')">Cancel</button>
@@ -794,6 +788,7 @@ async function checkAuth() {
     }
   } catch(e) { showLoginUI(); }
   loadInitialData();
+  loadStats();
 }
 
 function showUserUI() {
@@ -904,7 +899,6 @@ async function loadIncidents() {
 function showCreateIncident() {
   populateBuildings('inc-building');
   document.getElementById('incident-error').style.display = 'none';
-  document.getElementById('inc-email-row').style.display = currentUser ? 'none' : '';
   document.getElementById('modal-incident').classList.add('active');
 }
 
@@ -923,9 +917,6 @@ async function createIncident() {
       floor_nr: document.getElementById('inc-floor').value || null,
       room_nr: document.getElementById('inc-room').value || null
     };
-    if (!currentUser && document.getElementById('inc-email').value.trim()) {
-      body.reporter_email = document.getElementById('inc-email').value.trim();
-    }
     const res = await fetch('/api/incidents', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify(body)
@@ -934,7 +925,6 @@ async function createIncident() {
     if (data.error) { showError('incident-error', data.error); return; }
     closeModal('modal-incident');
     document.getElementById('inc-desc').value = '';
-    document.getElementById('inc-email').value = '';
     if (activeSection === 'myincidents' || activeSection === 'incidents') loadIncidents();
     loadStats();
     alert('Incident reported successfully! ID: ' + data.id);
